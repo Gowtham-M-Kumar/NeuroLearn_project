@@ -1,0 +1,527 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Settings - NEURO Teacher{% endblock %}
+
+{% block extra_head %}
+<style>
+    .settings-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding-bottom: 3rem;
+    }
+
+    .settings-section {
+        background: var(--bg-surface);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-subtle);
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--border-subtle);
+    }
+
+    .section-header h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .section-header .material-icons {
+        font-size: 1.8rem;
+        color: var(--accent-primary);
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-input, .form-select {
+        width: 100%;
+        padding: 0.875rem 1.125rem;
+        background: var(--bg-main);
+        border: 2px solid var(--border-subtle);
+        border-radius: 12px;
+        color: var(--text-primary);
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        font-family: inherit;
+    }
+
+    .form-input:focus, .form-select:focus {
+        border-color: var(--accent-primary);
+        outline: none;
+        box-shadow: 0 0 0 3px var(--accent-primary-light);
+    }
+
+    .form-input:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        background: var(--border-subtle);
+    }
+
+    .toggle-switch {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 28px;
+    }
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--border-subtle);
+        transition: 0.3s;
+        border-radius: 28px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 22px;
+        width: 22px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.3s;
+        border-radius: 50%;
+    }
+
+    input:checked + .slider {
+        background-color: var(--accent-primary);
+    }
+
+    input:checked + .slider:before {
+        transform: translateX(22px);
+    }
+
+    .toggle-label {
+        font-size: 0.95rem;
+        color: var(--text-primary);
+        flex: 1;
+    }
+
+    .setting-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .setting-row:last-child {
+        border-bottom: none;
+    }
+
+    .setting-info h4 {
+        margin: 0 0 0.25rem 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .setting-info p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 2.5rem;
+        padding-top: 2rem;
+        border-top: 2px solid var(--border-subtle);
+    }
+
+    .btn {
+        padding: 0.875rem 2rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        text-decoration: none;
+        justify-content: center;
+    }
+
+    .btn-primary {
+        background: var(--accent-primary);
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-primary:hover {
+        background: var(--accent-primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-secondary {
+        background: var(--bg-main);
+        color: var(--text-primary);
+        border: 2px solid var(--border-subtle);
+    }
+
+    .btn-secondary:hover {
+        background: var(--border-subtle);
+        border-color: var(--text-secondary);
+    }
+
+    .info-card {
+        background: var(--accent-primary-light);
+        border-left: 4px solid var(--accent-primary);
+        padding: 1.25rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: start;
+        gap: 1rem;
+    }
+
+    .info-card .material-icons {
+        color: var(--accent-primary);
+        font-size: 1.5rem;
+    }
+
+    .info-card-content {
+        flex: 1;
+    }
+
+    .info-card-title {
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .info-card-text {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    @media (max-width: 768px) {
+        .settings-container {
+            padding: 1rem;
+        }
+
+        .settings-section {
+            padding: 1.5rem;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-custom settings-container">
+    
+    <!-- PROFILE SETTINGS -->
+    <div class="settings-section">
+        <div class="section-header">
+            <span class="material-icons">person</span>
+            <h3>Profile Settings</h3>
+        </div>
+        
+        <div class="info-card">
+            <span class="material-icons">info</span>
+            <div class="info-card-content">
+                <div class="info-card-title">Your Profile</div>
+                <div class="info-card-text">These are your basic account details. Some fields can be edited from your main profile page.</div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="material-icons">badge</span>
+                Full Name
+            </label>
+            <input type="text" class="form-input" value="{{user.get_full_name}}" disabled>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="material-icons">email</span>
+                Email Address
+            </label>
+            <input type="email" class="form-input" value="{{user.email}}" disabled>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="material-icons">school</span>
+                Classroom Info
+            </label>
+            <input type="text" class="form-input" value="{{profile.classroom_info|default:'Not set'}}" disabled>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="material-icons">grade</span>
+                Grade Level
+            </label>
+            <input type="text" class="form-input" value="{{profile.grade_level|default:'Not set'}}" disabled>
+        </div>
+    </div>
+
+    <!-- DASHBOARD PREFERENCES -->
+    <div class="settings-section">
+        <div class="section-header">
+            <span class="material-icons">dashboard</span>
+            <h3>Dashboard Preferences</h3>
+        </div>
+
+        <div class="info-card">
+            <span class="material-icons">info</span>
+            <div class="info-card-content">
+                <div class="info-card-title">Customize Your Dashboard</div>
+                <div class="info-card-text">Control what appears on your teacher dashboard when you log in.</div>
+            </div>
+        </div>
+
+        <div class="setting-row">
+            <div class="setting-info">
+                <h4>Show Analytics Widgets</h4>
+                <p>Display KPI cards and performance metrics</p>
+            </div>
+            <label class="switch">
+                <input type="checkbox" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="setting-row">
+            <div class="setting-info">
+                <h4>Show Recent Activity Feed</h4>
+                <p>Display latest student actions and submissions</p>
+            </div>
+            <label class="switch">
+                <input type="checkbox" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="setting-row">
+            <div class="setting-info">
+                <h4>Show Students Needing Attention</h4>
+                <p>Highlight low performers and inactive students</p>
+            </div>
+            <label class="switch">
+                <input type="checkbox" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION SETTINGS -->
+    <div class="settings-section">
+        <div class="section-header">
+            <span class="material-icons">notifications</span>
+            <h3>Notification Settings</h3>
+        </div>
+
+        <div class="info-card">
+            <span class="material-icons">info</span>
+            <div class="info-card-content">
+                <div class="info-card-title">Control Alerts</div>
+                <div class="info-card-text">Choose what notifications and alerts you want to see.</div>
+            </div>
+        </div>
+
+        <div class="setting-row">
+            <div class="setting-info">
+                <h4>Student Activity Updates</h4>
+                <p>Notify when students complete lessons and games</p>
+            </div>
+            <label class="switch">
+                <input type="checkbox" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="setting-row">
+            <div class="setting-info">
+                <h4>Inactivity Alerts</h4>
+                <p>Alert when students haven't logged in for 7+ days</p>
+            </div>
+            <label class="switch">
+                <input type="checkbox" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="setting-row">
+            <div class="setting-info">
+                <h4>Performance Milestones</h4>
+                <p>Notify about achievements and mastery completions</p>
+            </div>
+            <label class="switch">
+                <input type="checkbox" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <!-- DISPLAY SETTINGS -->
+    <div class="settings-section">
+        <div class="section-header">
+            <span class="material-icons">palette</span>
+            <h3>Display Settings</h3>
+        </div>
+
+        <div class="info-card">
+            <span class="material-icons">info</span>
+            <div class="info-card-content">
+                <div class="info-card-title">Appearance</div>
+                <div class="info-card-text">Customize how the interface looks and feels.</div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="material-icons">format_color_fill</span>
+                Theme
+            </label>
+            <select class="form-select">
+                <option value="light">Light (Default)</option>
+                <option value="default">Standard</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">
+                <span class="material-icons">text_fields</span>
+                Font Size
+            </label>
+            <select class="form-select">
+                <option value="small">Small</option>
+                <option value="medium" selected>Medium (Default)</option>
+                <option value="large">Large</option>
+            </select>
+        </div>
+
+        <div class="setting-row">
+            <div class="setting-info">
+                <h4>Compact View</h4>
+                <p>Reduce spacing for a more condensed layout</p>
+            </div>
+            <label class="switch">
+                <input type="checkbox">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <!-- FORM ACTIONS -->
+    <div class="settings-section">
+        <div class="form-actions">
+            <a href="{% url 'users:dashboard' %}" class="btn btn-secondary">
+                <span class="material-icons">close</span>
+                Cancel
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <span class="material-icons">save</span>
+                Save Preferences
+            </button>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle toggle switches
+        const toggles = document.querySelectorAll('.switch input');
+        toggles.forEach(toggle => {
+            toggle.addEventListener('change', function() {
+                // Store in localStorage for demonstration
+                const label = this.closest('.setting-row')?.querySelector('.setting-info h4')?.textContent;
+                if (label) {
+                    localStorage.setItem('teacher_pref_' + label.toLowerCase().replace(/\s+/g, '_'), this.checked);
+                }
+            });
+        });
+
+        // Handle Save button
+        const saveBtn = document.querySelector('button[type="submit"]');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                // Collect preferences
+                const preferences = {};
+                document.querySelectorAll('.switch input').forEach((toggle, index) => {
+                    preferences['setting_' + index] = toggle.checked;
+                });
+                
+                // Get select values
+                document.querySelectorAll('.form-select').forEach((select, index) => {
+                    preferences['select_' + index] = select.value;
+                });
+
+                // Store or submit
+                localStorage.setItem('teacher_settings', JSON.stringify(preferences));
+                
+                // Show success message
+                const message = document.createElement('div');
+                message.className = 'alert alert-success';
+                message.textContent = 'Settings saved successfully!';
+                message.style.cssText = 'padding: 1rem; background: #d4edda; color: #155724; border-radius: 8px; margin-bottom: 1rem;';
+                document.querySelector('.settings-container').insertBefore(message, document.querySelector('.settings-section'));
+                
+                setTimeout(() => message.remove(), 3000);
+            });
+        }
+    });
+</script>
+{% endblock %}
+

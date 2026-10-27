@@ -1,0 +1,51 @@
+{% extends 'communication/base_aac.html' %}
+{% load static %}
+
+{% block title %}{{ category.name }} - Communication{% endblock %}
+{% block page_title %}{{ category.name }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 1rem;">
+    <a href="{% url 'communication:dashboard' %}" class="aac-back-btn" style="display: inline-flex;">
+        <span class="material-icons">arrow_back</span>
+        Back to Dashboard
+    </a>
+</div>
+
+{% include 'communication/partials/sentence_strip.html' %}
+
+<div class="aac-grid" style="margin-top: 2rem; flex-grow: 1;">
+    {% for symbol in symbols %}
+    <div class="aac-card border-{{ symbol.color_code|default:'yellow' }}"
+        onclick="selectSymbol('{{ symbol.word }}', '{% if symbol.image %}{{ symbol.image.url }}{% endif %}', '{{ symbol.color_code|default:'yellow' }}');">
+
+        <!-- Double tap to learn (optional) or long press? For now, let's keep it simple: click adds to strip. 
+             If we want 'learning mode', maybe add a small 'i' icon? 
+             User asked to 'select words', so primary action = select. 
+        -->
+
+        <div style="position: relative; width: 100%; display: flex; flex-direction: column; align-items: center;">
+            <!-- Small Learning Mode Link -->
+            <a href="{% url 'communication:learning_mode' symbol.id %}" onclick="event.stopPropagation();"
+                style="position: absolute; top: -10px; right: -10px; padding: 5px; color: #94a3b8;">
+                <span class="material-icons" style="font-size: 1.2rem;">info</span>
+            </a>
+
+            {% if symbol.image %}
+            <img src="{{ symbol.image.url }}" alt="{{ symbol.word }}" class="aac-img">
+            {% else %}
+            <span class="material-icons aac-icon">image</span>
+            {% endif %}
+            <span class="aac-word">{{ symbol.word }}</span>
+        </div>
+    </div>
+    {% empty %}
+    <div style="grid-column: 1/-1; text-align: center; margin-top: 3rem;">
+        <span class="material-icons" style="font-size: 4rem; color: #cbd5e1;">folder_open</span>
+        <p style="color: #64748b; margin-top: 1rem;">No symbols in this category yet.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<script src="{% static 'js/aac_shared.js' %}"></script>
+{% endblock %}

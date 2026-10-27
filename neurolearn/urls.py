@@ -26,10 +26,12 @@ urlpatterns = [
     path('', RedirectView.as_view(url='/login/', permanent=False), name='home'),
     path('', include('apps.users.urls')),
     path('routines/', include('apps.routines.urls')),
-    path('therapy/', include('apps.therapy.urls')),
+    # path('therapy/', include('apps.therapy.urls')), # Removed
     path('games/', include('apps.games.urls')),
     path('learning/', include('apps.learning.urls')),
     path('drawing/', include('apps.drawing.urls')),
+    path('messaging/', include('apps.messaging.urls')),
+    path('communication/', include('apps.communication.urls')),
     path('drawing', RedirectView.as_view(url='/drawing/', permanent=False)),
 ]
 

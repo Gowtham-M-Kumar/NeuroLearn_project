@@ -1,273 +1,432 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ user_detail.get_full_name }} - User Details - NEURO Learning{% endblock %}
+{% block page_title %}Student Analytics Profile{% endblock %}
+{% block page_subtitle %}In-depth performance review for {{user_detail.get_full_name}}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .profile-analytics-container {
+        display: flex;
+        flex-direction: column;
+        gap: 2.5rem;
+        padding-bottom: 3rem;
+        width: 100% !important;
+        max-width: none !important;
+    }
+
+    /* Section Cards */
+    .analytics-section {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 24px;
+        padding: 2.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        width: 100% !important;
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+
+    /* KPI Header */
+    .student-header-card {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
+        border: 1px solid var(--border-subtle);
+        border-radius: 24px;
+        padding: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 2rem;
+        width: 100% !important;
+    }
+
+    .student-meta {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .student-avatar-lg {
+        width: 100px;
+        height: 100px;
+        border-radius: 30px;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: white;
+        font-weight: 800;
+        box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+    }
+
+    .kpi-mini-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 3rem;
+    }
+
+    .kpi-mini-item {
+        text-align: center;
+    }
+
+    .kpi-mini-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.25rem;
+    }
+
+    .kpi-mini-value {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+
+    /* Learning & Game Grids */
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .metric-card {
+        background: var(--bg-main);
+        border: 1px solid var(--border-subtle);
+        border-radius: 20px;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .metric-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .metric-title {
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    /* Drawing Gallery */
+    .drawing-mini-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .drawing-mini-card {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid var(--border-subtle);
+        overflow: hidden;
+        transition: transform 0.2s;
+    }
+
+    .drawing-mini-card:hover {
+        transform: scale(1.03);
+    }
+
+    .drawing-preview-placeholder {
+        aspect-ratio: 4/3;
+        background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #94a3b8;
+    }
+
+    .drawing-info {
+        padding: 1rem;
+    }
+
+    /* Timeline */
+    .timeline-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        position: relative;
+    }
+
+    .timeline-container::before {
+        content: '';
+        position: absolute;
+        left: 20px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--border-subtle);
+    }
+
+    .timeline-item {
+        display: flex;
+        gap: 1.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .timeline-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-surface);
+        border: 2px solid var(--border-subtle);
+        color: var(--text-primary);
+        flex-shrink: 0;
+    }
+
+    .timeline-content {
+        background: var(--bg-main);
+        border: 1px solid var(--border-subtle);
+        border-radius: 16px;
+        padding: 1rem 1.5rem;
+        flex-grow: 1;
+    }
+
+    .timeline-meta {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-top: 0.25rem;
+    }
+
+    @media (max-width: 768px) {
+        .student-header-card {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .student-meta {
+            flex-direction: column;
+        }
+
+        .kpi-mini-grid {
+            gap: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <!-- Header -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="{% url 'users:user_list' %}">Users</a></li>
-                            <li class="breadcrumb-item active">{{ user_detail.get_full_name }}</li>
-                        </ol>
-                    </nav>
-                    <h1 class="h3 mb-0">
-                        <i class="fas fa-user text-primary me-2"></i>
-                        {{ user_detail.get_full_name }}
-                    </h1>
-                    <p class="text-muted mb-0">{{ user_detail.email }}</p>
-                </div>
-                <div class="d-flex gap-2">
-                    <a href="{% url 'admin:users_customuser_change' user_detail.id %}" class="btn btn-outline-primary">
-                        <i class="fas fa-edit me-2"></i>Edit User
-                    </a>
-                    <a href="{% url 'users:user_list' %}" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-2"></i>Back to List
-                    </a>
-                </div>
+<div class="profile-analytics-container">
+
+    <!-- A) STUDENT OVERVIEW -->
+    <div class="student-header-card">
+        <div class="student-meta">
+            {% if user_detail.profile_picture %}
+            <img src="{{user_detail.profile_picture.url}}" class="student-avatar-lg" style="object-fit: cover;">
+            {% else %}
+            <div class="student-avatar-lg">
+                {{user_detail.first_name|first|upper}}
             </div>
-
-            <div class="row">
-                <div class="col-lg-8">
-                    <!-- User Information -->
-                    <div class="card shadow-sm border-0 mb-4">
-                        <div class="card-header bg-white">
-                            <h5 class="mb-0">
-                                <i class="fas fa-info-circle text-primary me-2"></i>
-                                User Information
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p><strong>Full Name:</strong> {{ user_detail.get_full_name }}</p>
-                                    <p><strong>Username:</strong> {{ user_detail.username }}</p>
-                                    <p><strong>Email:</strong> {{ user_detail.email }}</p>
-                                    <p><strong>Role:</strong> 
-                                        <span class="badge bg-{% if user_detail.role == 'parent' %}primary{% elif user_detail.role == 'therapist' %}success{% elif user_detail.role == 'teacher' %}warning{% else %}info{% endif %}">
-                                            {{ user_detail.get_role_display }}
-                                        </span>
-                                    </p>
-                                </div>
-                                <div class="col-md-6">
-                                    <p><strong>Status:</strong> 
-                                        {% if user_detail.is_active %}
-                                        <span class="badge bg-success">Active</span>
-                                        {% else %}
-                                        <span class="badge bg-danger">Inactive</span>
-                                        {% endif %}
-                                    </p>
-                                    <p><strong>Staff Status:</strong> 
-                                        {% if user_detail.is_staff %}
-                                        <span class="badge bg-warning">Staff</span>
-                                        {% else %}
-                                        <span class="badge bg-secondary">Regular User</span>
-                                        {% endif %}
-                                    </p>
-                                    <p><strong>Date Joined:</strong> {{ user_detail.date_joined|date:"F d, Y" }}</p>
-                                    <p><strong>Last Login:</strong> {{ user_detail.last_login|date:"F d, Y H:i"|default:"Never" }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Profile Information -->
-                    <div class="card shadow-sm border-0">
-                        <div class="card-header bg-white">
-                            <h5 class="mb-0">
-                                <i class="fas fa-id-card text-primary me-2"></i>
-                                Profile Information
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            {% if user_detail.role == 'parent' and user_detail.parent_profile %}
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p><strong>Phone:</strong> {{ user_detail.parent_profile.phone|default:"Not provided" }}</p>
-                                    <p><strong>Address:</strong> {{ user_detail.parent_profile.address|default:"Not provided" }}</p>
-                                </div>
-                                <div class="col-md-6">
-                                    <p><strong>Children Count:</strong> {{ user_detail.parent_profile.children.count }}</p>
-                                    <p><strong>Emergency Contact:</strong> {{ user_detail.parent_profile.emergency_contact|default:"Not provided" }}</p>
-                                </div>
-                            </div>
-                            {% elif user_detail.role == 'therapist' and user_detail.therapist_profile %}
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p><strong>License Number:</strong> {{ user_detail.therapist_profile.license_number|default:"Not provided" }}</p>
-                                    <p><strong>Specialization:</strong> {{ user_detail.therapist_profile.specialization|default:"Not provided" }}</p>
-                                </div>
-                                <div class="col-md-6">
-                                    <p><strong>Years of Experience:</strong> {{ user_detail.therapist_profile.years_of_experience|default:"Not provided" }}</p>
-                                    <p><strong>Assigned Children:</strong> {{ user_detail.therapist_profile.assigned_children.count }}</p>
-                                </div>
-                            </div>
-                            {% elif user_detail.role == 'teacher' and user_detail.teacher_profile %}
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p><strong>Subject:</strong> {{ user_detail.teacher_profile.subject|default:"Not provided" }}</p>
-                                    <p><strong>Grade Level:</strong> {{ user_detail.teacher_profile.grade_level|default:"Not provided" }}</p>
-                                </div>
-                                <div class="col-md-6">
-                                    <p><strong>Years of Experience:</strong> {{ user_detail.teacher_profile.years_of_experience|default:"Not provided" }}</p>
-                                    <p><strong>Assigned Children:</strong> {{ user_detail.teacher_profile.assigned_children.count }}</p>
-                                </div>
-                            </div>
-                            {% elif user_detail.role == 'child' and user_detail.child_profile %}
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p><strong>Age:</strong> {{ user_detail.child_profile.age|default:"Not provided" }}</p>
-                                    <p><strong>Grade:</strong> {{ user_detail.child_profile.grade|default:"Not provided" }}</p>
-                                </div>
-                                <div class="col-md-6">
-                                    <p><strong>Special Needs:</strong> {{ user_detail.child_profile.special_needs|default:"Not provided" }}</p>
-                                    <p><strong>Parent:</strong> 
-                                        {% if user_detail.child_profile.parent %}
-                                        <a href="{% url 'users:user_detail' user_detail.child_profile.parent.user.id %}">
-                                            {{ user_detail.child_profile.parent.user.get_full_name }}
-                                        </a>
-                                        {% else %}
-                                        Not assigned
-                                        {% endif %}
-                                    </p>
-                                </div>
-                            </div>
-                            {% else %}
-                            <div class="text-center py-3">
-                                <i class="fas fa-exclamation-triangle text-warning fa-2x mb-3"></i>
-                                <p class="text-muted">Profile information not available or not created yet.</p>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Sidebar -->
-                <div class="col-lg-4">
-                    <!-- Profile Picture -->
-                    <div class="card shadow-sm border-0 mb-4">
-                        <div class="card-header bg-white">
-                            <h6 class="mb-0">
-                                <i class="fas fa-camera text-primary me-2"></i>
-                                Profile Picture
-                            </h6>
-                        </div>
-                        <div class="card-body text-center">
-                            {% if user_detail.profile_picture %}
-                            <img src="{{ user_detail.profile_picture.url }}" alt="{{ user_detail.get_full_name }}" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
-                            {% else %}
-                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 150px; height: 150px;">
-                                <i class="fas fa-user fa-3x text-muted"></i>
-                            </div>
-                            {% endif %}
-                            <p class="text-muted small">No profile picture uploaded</p>
-                        </div>
-                    </div>
-
-                    <!-- Quick Actions -->
-                    <div class="card shadow-sm border-0 mb-4">
-                        <div class="card-header bg-white">
-                            <h6 class="mb-0">
-                                <i class="fas fa-tools text-primary me-2"></i>
-                                Quick Actions
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="d-grid gap-2">
-                                <a href="{% url 'admin:users_customuser_change' user_detail.id %}" class="btn btn-outline-primary btn-sm">
-                                    <i class="fas fa-edit me-2"></i>Edit User
-                                </a>
-                                {% if user_detail.is_active %}
-                                <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deactivateModal">
-                                    <i class="fas fa-ban me-2"></i>Deactivate User
-                                </button>
-                                {% else %}
-                                <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#activateModal">
-                                    <i class="fas fa-check me-2"></i>Activate User
-                                </button>
-                                {% endif %}
-                                <a href="mailto:{{ user_detail.email }}" class="btn btn-outline-info btn-sm">
-                                    <i class="fas fa-envelope me-2"></i>Send Email
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- System Information -->
-                    <div class="card shadow-sm border-0">
-                        <div class="card-header bg-white">
-                            <h6 class="mb-0">
-                                <i class="fas fa-cog text-primary me-2"></i>
-                                System Information
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <p class="small mb-1"><strong>User ID:</strong> {{ user_detail.id }}</p>
-                            <p class="small mb-1"><strong>Created:</strong> {{ user_detail.date_joined|date:"M d, Y H:i" }}</p>
-                            <p class="small mb-1"><strong>Last Login:</strong> {{ user_detail.last_login|date:"M d, Y H:i"|default:"Never" }}</p>
-                            <p class="small mb-0"><strong>Active:</strong> {% if user_detail.is_active %}Yes{% else %}No{% endif %}</p>
-                        </div>
-                    </div>
+            {% endif %}
+            <div>
+                <h2 style="margin:0; font-weight: 800; font-size: 2rem;">{{user_detail.get_full_name}}</h2>
+                <p class="text-secondary" style="margin: 0.25rem 0 0 0;">Student ID:
+                    #{{user_detail.id|stringformat:"05d"}}</p>
+                <div style="margin-top: 1rem;">
+                    <span class="status-badge badge-success">Active Student</span>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-
-<!-- Deactivate Modal -->
-{% if user_detail.is_active %}
-<div class="modal fade" id="deactivateModal" tabindex="-1" aria-labelledby="deactivateModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deactivateModalLabel">Deactivate User</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="kpi-mini-grid">
+            <div class="kpi-mini-item">
+                <div class="kpi-mini-label">Activities</div>
+                <div class="kpi-mini-value">{{stats.total_activities}}</div>
             </div>
-            <div class="modal-body">
-                Are you sure you want to deactivate <strong>{{ user_detail.get_full_name }}</strong>?
-                This will prevent them from logging in.
+            <div class="kpi-mini-item">
+                <div class="kpi-mini-label">Success Rate</div>
+                <div class="kpi-mini-value">{{stats.overall_accuracy}}%</div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form method="post" action="{% url 'admin:users_customuser_change' user_detail.id %}" style="display: inline;">
-                    {% csrf_token %}
-                    <input type="hidden" name="is_active" value="0">
-                    <button type="submit" class="btn btn-danger">Deactivate</button>
-                </form>
+            <div class="kpi-mini-item">
+                <div class="kpi-mini-label">Engagement</div>
+                <div class="kpi-mini-value">{{stats.avg_game_time}}h</div>
             </div>
         </div>
     </div>
-</div>
-{% endif %}
 
-<!-- Activate Modal -->
-{% if not user_detail.is_active %}
-<div class="modal fade" id="activateModal" tabindex="-1" aria-labelledby="activateModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="activateModalLabel">Activate User</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                Are you sure you want to activate <strong>{{ user_detail.get_full_name }}</strong>?
-                This will allow them to log in again.
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form method="post" action="{% url 'admin:users_customuser_change' user_detail.id %}" style="display: inline;">
-                    {% csrf_token %}
-                    <input type="hidden" name="is_active" value="1">
-                    <button type="submit" class="btn btn-success">Activate</button>
-                </form>
-            </div>
+    <!-- MANAGEMENT ACTIONS (Clinical Control) -->
+    <section class="analytics-section"
+        style="background: rgba(99, 102, 241, 0.05); border: 1px dashed var(--accent-primary);">
+        <div class="section-title">
+            <span class="material-icons" style="color: var(--accent-primary);">settings_suggest</span>
+            Clinical Management
         </div>
-    </div>
+        <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+            <a href="{% url 'routines:routine_create' user_detail.id %}" class="cta-btn"
+                style="background: var(--accent-primary); color: white;">
+                <span class="material-icons">add_task</span>
+                Setup Daily Routine
+            </a>
+            <a href="{% if user_detail.routine %}{% url 'routines:routine_detail' user_detail.routine.id %}{% else %}#{% endif %}"
+                class="cta-btn cta-outline"
+                style="background: white; {% if not user_detail.routine %}opacity: 0.5; pointer-events: none;{% endif %}"
+                title="{% if not user_detail.routine %}No routine created yet{% endif %}">
+                <span class="material-icons">edit_calendar</span>
+                Manage Timetable
+            </a>
+            <a href="{% if user_detail.routine %}{% url 'routines:task_create' user_detail.routine.id %}{% else %}#{% endif %}"
+                class="cta-btn cta-outline"
+                style="background: white; {% if not user_detail.routine %}opacity: 0.5; pointer-events: none;{% endif %}">
+                <span class="material-icons">assignment_add</span>
+                Add Routine Task
+            </a>
+        </div>
+        {% if not user_detail.routine %}
+        <p class="text-secondary small" style="margin-top: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span class="material-icons" style="font-size: 16px;">info</span>
+            This student does not have an active routine. Click "Setup Daily Routine" to begin clinical tracking.
+        </p>
+        {% endif %}
+    </section>
+
+    <!-- B.5) LEARNING PROGRESS (inlined before Game) -->
+    {% if learning_stats %}
+    <section class="analytics-section">
+        <div class="section-title">
+            <span class="material-icons" style="color: #8b5cf6;">library_books</span>
+            Learning Progress
+        </div>
+        <div class="metrics-grid">
+            {% with ls=learning_stats %}
+            <!-- Letters -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <span class="metric-title">Alphabet</span>
+                    <span class="status-badge badge-success">{{ls.letters.count}}/{{ls.letters.total}}</span>
+                </div>
+                <div class="progress-minimal">
+                    <div class="progress-bar-minimal" style="width: {{ls.letters.percentage}}%;"></div>
+                </div>
+                <div class="small text-secondary">{{ls.letters.percentage}}% mastered</div>
+            </div>
+            <!-- Numbers -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <span class="metric-title">Numbers</span>
+                    <span class="status-badge badge-success">{{ls.numbers.count}}/{{ls.numbers.total}}</span>
+                </div>
+                <div class="progress-minimal">
+                    <div class="progress-bar-minimal" style="width: {{ls.numbers.percentage}}%; background: #06b6d4;">
+                    </div>
+                </div>
+                <div class="small text-secondary">{{ls.numbers.percentage}}% completed</div>
+            </div>
+            <!-- Words -->
+            <div class="metric-card">
+                <div class="metric-header">
+                    <span class="metric-title">Words</span>
+                    <span class="status-badge badge-success">{{ls.words.count}}/{{ls.words.total}}</span>
+                </div>
+                <div class="progress-minimal">
+                    <div class="progress-bar-minimal" style="width: {{ls.words.percentage}}%; background: #f59e0b;">
+                    </div>
+                </div>
+                <div class="small text-secondary">{{ls.words.percentage}}% learned</div>
+            </div>
+            <!-- Emotions -->
+            {% if ls.emotions %}
+            <div class="metric-card">
+                <div class="metric-header">
+                    <span class="metric-title">Emotions</span>
+                    <span class="status-badge badge-success">{{ls.emotions.count}}/{{ls.emotions.total}}</span>
+                </div>
+                <div class="progress-minimal">
+                    <div class="progress-bar-minimal" style="width: {{ls.emotions.percentage}}%; background: #ec4899;">
+                    </div>
+                </div>
+                <div class="small text-secondary">{{ls.emotions.percentage}}% learned</div>
+            </div>
+            {% endif %}
+            {% endwith %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- C) GAME PERFORMANCE -->
+    <section class="analytics-section">
+        <div class="section-title">
+            <span class="material-icons" style="color: #f59e0b;">sports_esports</span>
+            Game Performance
+        </div>
+        <div class="metrics-grid">
+            {% for progress in game_progress %}
+            <div class="metric-card">
+                <div class="metric-header">
+                    <h5 class="metric-title" style="margin:0;">{{progress.game.name}}</h5>
+                    <span class="status-badge badge-success">Lvl {{progress.highest_level_completed}}</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem;">
+                    <div>
+                        <div class="kpi-mini-label" style="font-size: 0.6rem;">Accuracy</div>
+                        <div style="font-weight: 800; color: var(--text-primary);">
+                            {{progress.average_accuracy|floatformat:1}}%</div>
+                    </div>
+                    <div>
+                        <div class="kpi-mini-label" style="font-size: 0.6rem;">Sessions</div>
+                        <div style="font-weight: 800; color: var(--text-primary);">{{progress.total_sessions}}</div>
+                    </div>
+                </div>
+                <div class="small text-secondary" style="margin-top: 0.5rem;">
+                    Last played: {{progress.last_played|date:"M d, Y"}}
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state" style="grid-column: 1/-1;">
+                <p>No game data available for this student yet.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- E) ACTIVITY TIMELINE -->
+    <section class="analytics-section">
+        <div class="section-title">
+            <span class="material-icons" style="color: var(--accent-secondary);">history</span>
+            Session Timeline
+        </div>
+        <div class="timeline-container">
+            {% for item in activity_timeline %}
+            <div class="timeline-item">
+                <div class="timeline-icon" style="color: {{item.color}}; border-color: {{item.color}}33;">
+                    <span class="material-icons" style="font-size: 20px;">{{item.icon}}</span>
+                </div>
+                <div class="timeline-content">
+                    <div style="font-weight: 700; font-size: 0.95rem;">{{item.title}}</div>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary);">{{item.detail}}</div>
+                    <div class="timeline-meta">{{item.timestamp|timesince}} ago</div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <p>No recent activity sequence.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
 </div>
-{% endif %}
-{% endblock %} 
+
+<!-- Navigation Footer -->
+<div style="display: flex; justify-content: flex-start; gap: 1rem;">
+    <a href="{% url 'users:user_list' %}" class="cta-btn cta-outline" style="padding: 0.85rem 2rem;">
+        <span class="material-icons">arrow_back</span>
+        Back to Student List
+    </a>
+</div>
+
+{% endblock %}

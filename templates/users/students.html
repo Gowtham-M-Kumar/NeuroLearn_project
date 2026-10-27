@@ -1,0 +1,300 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}Student Discovery{% endblock %}
+{% block page_subtitle %}Search for students or view recently joined members to manage their routines.{% endblock %}
+
+{% block extra_head %}
+<style>
+    .student-search-container {
+        display: flex;
+        flex-direction: column;
+        gap: 2.5rem;
+        padding-bottom: 3rem;
+    }
+
+    /* Search Bar Section */
+    .search-section {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 24px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .search-form {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .search-input-group {
+        position: relative;
+        flex-grow: 1;
+    }
+
+    .search-input-group .material-icons {
+        position: absolute;
+        left: 1.25rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+    }
+
+    .search-control {
+        width: 100%;
+        padding: 1rem 1rem 1rem 3.5rem;
+        background: var(--bg-main);
+        border: 1px solid var(--border-subtle);
+        border-radius: 16px;
+        color: var(--text-primary);
+        font-size: 1rem;
+        transition: all 0.2s;
+    }
+
+    .search-control:focus {
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        outline: none;
+    }
+
+    /* Grid Layouts */
+    .students-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    /* Student Card */
+    .student-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 20px;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .student-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--accent-primary);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    }
+
+    .student-profile {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .student-avatar {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 800;
+        font-size: 1.25rem;
+    }
+
+    .student-meta h4 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .student-meta p {
+        margin: 0.2rem 0 0;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+
+    .student-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: var(--bg-main);
+        border-radius: 12px;
+    }
+
+    .stat-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+    }
+
+    .stat-label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        font-weight: 700;
+    }
+
+    .stat-value {
+        font-size: 0.9rem;
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+
+    .view-profile-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        background: rgba(99, 102, 241, 0.05);
+        border-radius: 12px;
+        color: var(--accent-primary);
+        font-weight: 700;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+
+    .student-card:hover .view-profile-btn {
+        background: var(--accent-primary);
+        color: white;
+    }
+
+    .empty-search {
+        text-align: center;
+        padding: 5rem 2rem;
+        background: var(--bg-surface);
+        border-radius: 24px;
+        border: 2px dashed var(--border-subtle);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="student-search-container">
+
+    <!-- 1. SEARCH SECTION -->
+    <section class="search-section">
+        <form action="{% url 'users:students' %}" method="GET" class="search-form">
+            <div class="search-input-group">
+                <span class="material-icons">search</span>
+                <input type="text" name="q" value="{{query}}" class="search-control"
+                    placeholder="Search by name, phone, or username...">
+            </div>
+            <button type="submit" class="cta-btn" style="padding: 0 2rem;">Search</button>
+        </form>
+    </section>
+
+    <!-- 2. SEARCH RESULTS (Conditional) -->
+    {% if query %}
+    <section>
+        <div class="section-header">
+            <span class="material-icons" style="color: var(--accent-primary);">search_off</span>
+            <h3 class="section-title">Search Results for "{{query}}"</h3>
+        </div>
+        {% if search_results %}
+        <div class="students-grid">
+            {% for student in search_results %}
+            <a href="{% url 'users:user_detail' student.id %}" class="student-card">
+                <div class="student-profile">
+                    {% if student.profile_picture %}
+                    <img src="{{student.profile_picture.url}}" class="student-avatar" style="object-fit: cover;">
+                    {% else %}
+                    <div class="student-avatar">{{student.first_name|first|upper}}</div>
+                    {% endif %}
+                    <div class="student-meta">
+                        <h4>{{student.get_full_name}}</h4>
+                        <p>{{student.email}}</p>
+                    </div>
+                </div>
+                <div class="student-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Phone</span>
+                        <span class="stat-value">{{student.phone_number|default:"N/A"}}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Username</span>
+                        <span class="stat-value">@{{student.username}}</span>
+                    </div>
+                </div>
+                <div class="view-profile-btn">
+                    <span class="material-icons" style="font-size: 18px;">analytics</span>
+                    View Analytics & Routines
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-search">
+            <span class="material-icons"
+                style="font-size: 4rem; opacity: 0.2; margin-bottom: 1.5rem;">person_search</span>
+            <h3>No Students Found</h3>
+            <p>We couldn't find any students matching "{{query}}".</p>
+        </div>
+        {% endif %}
+    </section>
+    {% endif %}
+
+    <!-- 3. RECENTLY JOINED STUDENTS -->
+    <section>
+        <div class="section-header">
+            <span class="material-icons" style="color: #10b981;">history</span>
+            <h3 class="section-title">Recently Joined Students</h3>
+        </div>
+        <div class="students-grid">
+            {% for student in recent_students %}
+            <a href="{% url 'users:user_detail' student.id %}" class="student-card">
+                <div class="student-profile">
+                    {% if student.profile_picture %}
+                    <img src="{{student.profile_picture.url}}" class="student-avatar" style="object-fit: cover;">
+                    {% else %}
+                    <div class="student-avatar" style="background: linear-gradient(135deg, #10b981, #06b6d4);">
+                        {{student.first_name|first|upper}}
+                    </div>
+                    {% endif %}
+                    <div class="student-meta">
+                        <h4>{{student.get_full_name}}</h4>
+                        <p>Joined {{student.date_joined|timesince}} ago</p>
+                    </div>
+                </div>
+                <div class="student-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Email</span>
+                        <span
+                            style="font-size: 0.75rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            {{student.email}}
+                        </span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Status</span>
+                        <span class="stat-value" style="color: #10b981;">New Member</span>
+                    </div>
+                </div>
+                <div class="view-profile-btn">
+                    <span class="material-icons" style="font-size: 18px;">visibility</span>
+                    Open Profile
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+
+</div>
+{% endblock %}

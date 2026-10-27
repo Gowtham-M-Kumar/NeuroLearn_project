@@ -14,3 +14,19 @@ from django.core.asgi import get_asgi_application
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'neurolearn.settings')
 
 application = get_asgi_application()
+
+from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.auth import AuthMiddlewareStack
+from channels.security.websocket import AllowedHostsOriginValidator
+import apps.messaging.routing
+
+application = ProtocolTypeRouter({
+    "http": application,
+    "websocket": AllowedHostsOriginValidator(
+        AuthMiddlewareStack(
+            URLRouter(
+                apps.messaging.routing.websocket_urlpatterns
+            )
+        )
+    ),
+})

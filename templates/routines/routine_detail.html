@@ -1,219 +1,736 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ routine.title }} - NEURO Learning{% endblock %}
+{% block page_header_icon %}
+{% endblock %}
+
+{% block page_title %}{{ routine.title }}{% endblock %}
+
+{% block page_subtitle %}
+
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <!-- Header -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="{% url 'routines:routine_list' %}">Routines</a></li>
-                            <li class="breadcrumb-item active">{{ routine.title }}</li>
-                        </ol>
-                    </nav>
-                    <h1 class="h3 mb-0">
-                        <i class="fas fa-calendar-check text-primary me-2"></i>
-                        {{ routine.title }}
-                    </h1>
-                    {% if routine.description %}
-                    <p class="text-muted mb-0">{{ routine.description }}</p>
-                    {% endif %}
+<div class="container-custom" style="max-width: 1100px; margin: 0 auto;">
+
+
+
+    <!-- Timeline Section -->
+    <div id="timeline-section" class="tab-content active">
+        <!-- Day Type Selector -->
+        <div class="day-selector">
+            {% for code, label in day_types %}
+            <button class="day-type-btn {% if forloop.first %}active{% endif %}" data-day-type="{{ code }}"
+                onclick="switchDayType('{{ code }}', this)">
+                {{ label }}
+            </button>
+            {% endfor %}
+        </div>
+
+        <div class="section-card" style="min-height: 500px; margin-top: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h3 class="section-title-sm" style="margin-bottom: 0;">
+                    <span class="material-icons" style="color: var(--accent-primary);">history_toggle_off</span>
+                    Daily Schedule - <span id="active-type-heading">School Days</span>
+                </h3>
+                {% if user.role == 'teacher' or user.role == 'therapist' %}
+                <button class="btn btn-primary" onclick="openAddModal()">
+                    <span class="material-icons">add_time</span>
+                    Add Entry
+                </button>
+                {% endif %}
+            </div>
+
+            <!-- Timetable Grid -->
+            <div id="timetable-grid"
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; position: relative;">
+                <!-- Left: AM -->
+                <div class="timeline-column">
+                    <div class="column-header">
+                        <span class="material-icons">wb_twilight</span> Morning (AM)
+                    </div>
+                    <div id="am-container" class="column-container"></div>
                 </div>
-                <div class="d-flex gap-2">
-                    {% if user_role in 'therapist,teacher' and routine.created_by == user %}
-                    <a href="{% url 'routines:routine_edit' routine.id %}" class="btn btn-outline-primary">
-                        <i class="fas fa-edit me-2"></i>Edit
-                    </a>
-                    <a href="{% url 'routines:routine_progress' routine.id %}" class="btn btn-outline-info">
-                        <i class="fas fa-chart-line me-2"></i>Progress
-                    </a>
-                    {% endif %}
-                    {% if user_role in 'therapist,teacher' %}
-                    <a href="{% url 'routines:routine_schedule' routine.id %}" class="btn btn-outline-success">
-                        <i class="fas fa-clock me-2"></i>Schedule
-                    </a>
-                    {% endif %}
+
+                <!-- Right: PM -->
+                <div class="timeline-column">
+                    <div class="column-header">
+                        <span class="material-icons">nights_stay</span> Afternoon & Evening (PM)
+                    </div>
+                    <div id="pm-container" class="column-container"></div>
                 </div>
             </div>
 
-            <!-- Tasks Section -->
-            <div class="row">
-                <div class="col-lg-8">
-                    <div class="card shadow-sm border-0">
-                        <div class="card-header bg-white">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0">
-                                    <i class="fas fa-tasks text-primary me-2"></i>
-                                    Tasks
-                                </h5>
-                                {% if user_role in 'therapist,teacher' and routine.created_by == user %}
-                                <a href="{% url 'routines:task_create' routine.id %}" class="btn btn-primary btn-sm">
-                                    <i class="fas fa-plus me-2"></i>Add Task
-                                </a>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            {% if tasks %}
-                            <div class="task-list" id="taskList">
-                                {% for task in tasks %}
-                                <div class="task-item mb-3 p-3 border rounded" data-task-id="{{ task.id }}">
-                                    <div class="d-flex align-items-center">
-                                        <div class="me-3">
-                                            {% if task.image %}
-                                            <img src="{{ task.image.url }}" alt="{{ task.title }}" class="rounded" style="width: 60px; height: 60px; object-fit: cover;">
-                                            {% else %}
-                                            <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                                                <i class="fas fa-image text-muted"></i>
-                                            </div>
-                                            {% endif %}
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <h6 class="mb-1">{{ task.title }}</h6>
-                                            {% if task.description %}
-                                            <p class="text-muted small mb-1">{{ task.description }}</p>
-                                            {% endif %}
-                                            <div class="d-flex align-items-center">
-                                                <span class="badge bg-info me-2">{{ task.estimated_duration }} min</span>
-                                                {% if task.is_required %}
-                                                <span class="badge bg-warning">Required</span>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                        <div class="ms-3">
-                                            {% if user_role in 'child,parent' %}
-                                            <form method="post" action="{% url 'routines:task_complete' task.id %}" class="d-inline">
-                                                {% csrf_token %}
-                                                {% if user_role == 'parent' %}
-                                                <select name="child_id" class="form-select form-select-sm mb-2" required>
-                                                    <option value="">Select Child</option>
-                                                    {% for child in user.parent_profile.children.all %}
-                                                    <option value="{{ child.id }}">{{ child.get_full_name }}</option>
-                                                    {% endfor %}
-                                                </select>
-                                                {% endif %}
-                                                <button type="submit" class="btn btn-success btn-sm">
-                                                    <i class="fas fa-check me-1"></i>Complete
-                                                </button>
-                                            </form>
-                                            {% endif %}
-                                            {% if user_role in 'therapist,teacher' and routine.created_by == user %}
-                                            <a href="{% url 'routines:task_edit' task.id %}" class="btn btn-outline-primary btn-sm">
-                                                <i class="fas fa-edit me-1"></i>Edit
-                                            </a>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-                            {% else %}
-                            <div class="text-center py-4">
-                                <i class="fas fa-tasks fa-2x text-muted mb-3"></i>
-                                <h6 class="text-muted">No tasks yet</h6>
-                                <p class="text-muted small">Add tasks to create a complete routine.</p>
-                                {% if user_role in 'therapist,teacher' and routine.created_by == user %}
-                                <a href="{% url 'routines:task_create' routine.id %}" class="btn btn-primary btn-sm">
-                                    <i class="fas fa-plus me-2"></i>Add First Task
-                                </a>
-                                {% endif %}
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
+            <!-- Empty State -->
+            <div id="empty-state" style="display: none; text-align: center; padding: 5rem 2rem;">
+                <div class="empty-icon-wrapper">
+                    <span class="material-icons">calendar_today</span>
                 </div>
-
-                <!-- Sidebar -->
-                <div class="col-lg-4">
-                    <div class="card shadow-sm border-0 mb-4">
-                        <div class="card-header bg-white">
-                            <h6 class="mb-0">
-                                <i class="fas fa-info-circle text-primary me-2"></i>
-                                Routine Info
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="row text-center">
-                                <div class="col-6">
-                                    <div class="text-primary fw-bold">{{ tasks.count }}</div>
-                                    <small class="text-muted">Total Tasks</small>
-                                </div>
-                                <div class="col-6">
-                                    <div class="text-success fw-bold">{{ routine.assigned_to.count }}</div>
-                                    <small class="text-muted">Assigned To</small>
-                                </div>
-                            </div>
-                            <hr>
-                            <div class="mb-2">
-                                <small class="text-muted">Created by:</small><br>
-                                <strong>{{ routine.created_by.get_full_name }}</strong>
-                            </div>
-                            <div class="mb-2">
-                                <small class="text-muted">Created:</small><br>
-                                <strong>{{ routine.created_at|date:"M d, Y" }}</strong>
-                            </div>
-                            <div class="mb-2">
-                                <small class="text-muted">Status:</small><br>
-                                <span class="badge bg-{% if routine.is_active %}success{% else %}secondary{% endif %}">
-                                    {% if routine.is_active %}Active{% else %}Inactive{% endif %}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {% if user_role in 'therapist,teacher' %}
-                    <div class="card shadow-sm border-0">
-                        <div class="card-header bg-white">
-                            <h6 class="mb-0">
-                                <i class="fas fa-users text-primary me-2"></i>
-                                Assigned Children
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            {% if routine.assigned_to.all %}
-                            <ul class="list-unstyled mb-0">
-                                {% for child in routine.assigned_to.all %}
-                                <li class="mb-2">
-                                    <div class="d-flex align-items-center">
-                                        {% if child.profile_picture %}
-                                        <img src="{{ child.profile_picture.url }}" alt="{{ child.get_full_name }}" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
-                                        {% else %}
-                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
-                                            <i class="fas fa-user text-muted"></i>
-                                        </div>
-                                        {% endif %}
-                                        <span>{{ child.get_full_name }}</span>
-                                    </div>
-                                </li>
-                                {% endfor %}
-                            </ul>
-                            {% else %}
-                            <p class="text-muted small mb-0">No children assigned yet.</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
+                <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;">No Schedule Found</h4>
+                <p class="text-muted">Start by adding a classroom or home routine entry.</p>
             </div>
         </div>
     </div>
-</div>
-{% endblock %}
 
-{% block extra_js %}
-<script>
-// Drag and drop functionality for task reordering
-document.addEventListener('DOMContentLoaded', function() {
-    const taskList = document.getElementById('taskList');
-    if (taskList && '{{ user_role }}' === 'therapist' || '{{ user_role }}' === 'teacher') {
-        // Initialize drag and drop here
-        console.log('Drag and drop ready for task reordering');
+
+
+</div>
+
+<!-- Add Entry Modal -->
+{% if user.role == 'teacher' or user.role == 'therapist' %}
+<div id="addModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content section-card" style="max-width: 500px; width: 95%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 class="section-title-sm" style="margin-bottom: 0;" id="modalTitle">New Timetable Entry</h3>
+            <button onclick="closeAddModal()" class="close-modal-btn"><span class="material-icons">close</span></button>
+        </div>
+        <form id="addEntryForm">
+            {% csrf_token %}
+            <input type="hidden" name="day_type" id="modal_day_type">
+            <input type="hidden" name="entry_id" id="modal_entry_id">
+
+            <div class="form-group">
+                <label class="form-label">Time Selection</label>
+                <div class="time-picker-grid">
+                    <div class="form-field-wrapper">
+                        <label>Hour</label>
+                        {{ entry_form.hour }}
+                    </div>
+                    <div class="form-field-wrapper">
+                        <label>Minute</label>
+                        {{ entry_form.minute }}
+                    </div>
+                    <div class="form-field-wrapper">
+                        <label>AM/PM</label>
+                        {{ entry_form.am_pm }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Activity Type</label>
+                {{ entry_form.task_type }}
+            </div>
+
+            <div class="form-group" id="custom-desc-group" style="display: none;">
+                <label class="form-label">Custom Activity Name</label>
+                {{ entry_form.custom_description }}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Notes / Instructions (Optional)</label>
+                {{ entry_form.notes }}
+            </div>
+
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                <button type="button" class="btn btn-outline" onclick="closeAddModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Entry</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<style>
+    /* Tabs Styling */
+    .tabs-container {
+        margin-bottom: 2rem;
     }
-});
+
+    .tabs-header {
+        display: flex;
+        gap: 0.5rem;
+        background: var(--bg-surface);
+        padding: 0.5rem;
+        border-radius: 12px;
+        border: 1px solid var(--border-subtle);
+    }
+
+    .tab-btn {
+        flex: 1;
+        background: none;
+        border: none;
+        padding: 0.8rem 1rem;
+        color: var(--text-secondary);
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+        background: var(--accent-primary);
+        color: white;
+    }
+
+    .tab-btn .material-icons {
+        font-size: 20px;
+    }
+
+    /* Day Type Selector */
+    .day-selector {
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.3rem;
+        background: var(--bg-surface);
+        width: fit-content;
+        margin: 0 auto;
+        border-radius: 30px;
+        border: 1px solid var(--border-subtle);
+    }
+
+    .day-type-btn {
+        background: none;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .day-type-btn.active {
+        background: var(--bg-main);
+        color: var(--accent-primary);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Timetable Styling (Premium Timeline Split) */
+    .timeline-column {
+        position: relative;
+    }
+
+    .column-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--border-subtle);
+        letter-spacing: 0.05em;
+    }
+
+    .column-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        position: relative;
+        padding-left: 0.5rem;
+    }
+
+    /* Connectivity line per column */
+    .column-container::before {
+        content: '';
+        position: absolute;
+        left: 21px;
+        /* Center of the icon roughly */
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--border-subtle);
+        opacity: 0.3;
+        z-index: 0;
+    }
+
+    .timetable-entry {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        padding: 1rem;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 18px;
+        transition: all 0.3s ease;
+        position: relative;
+        z-index: 1;
+        cursor: pointer;
+    }
+
+    .timetable-entry:hover {
+        transform: translateY(-4px) scale(1.02);
+        background: var(--bg-main);
+        border-color: var(--accent-primary);
+        box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.4);
+    }
+
+    .entry-time-col {
+        min-width: 85px;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: var(--text-primary);
+        background: rgba(255, 255, 255, 0.03);
+        padding: 0.4rem 0.6rem;
+        border-radius: 10px;
+        text-align: center;
+    }
+
+    .entry-icon-col {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        z-index: 2;
+        flex-shrink: 0;
+    }
+
+    .timetable-entry:hover .entry-icon-col {
+        transform: scale(1.1);
+    }
+
+    .entry-content-col {
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .entry-title-text {
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin-bottom: 0.2rem;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .entry-notes-text {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin: 0;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    @media (max-width: 992px) {
+        #timetable-grid {
+            grid-template-columns: 1fr;
+            gap: 3rem;
+        }
+
+        .entry-actions {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    .action-icon-btn {
+        background: var(--bg-main);
+        border: 1px solid var(--border-subtle);
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .action-icon-btn.edit {
+        color: var(--accent-primary);
+    }
+
+    .action-icon-btn.delete {
+        color: #ef4444;
+    }
+
+    .action-icon-btn:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Modal Styling */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .close-modal-btn {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: 5px;
+    }
+
+    .time-picker-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .form-field-wrapper label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        display: block;
+        margin-bottom: 0.3rem;
+    }
+
+    /* Actions */
+    .delete-entry-btn {
+        background: none;
+        border: none;
+        color: #ef4444;
+        cursor: pointer;
+        opacity: 0.3;
+        transition: opacity 0.2s;
+    }
+
+    .timetable-entry:hover .delete-entry-btn {
+        opacity: 1;
+    }
+
+    /* Task Cards */
+    .tasks-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .task-item-card {
+        background: var(--bg-main);
+        padding: 1.5rem;
+        border-radius: 16px;
+        border: 1px solid var(--border-subtle);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .task-meta {
+        margin-top: 1rem;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        font-size: 0.85rem;
+    }
+
+    .task-meta span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .task-actions {
+        margin-top: 1.5rem;
+        border-top: 1px solid var(--border-subtle);
+        padding-top: 1rem;
+        display: flex;
+        gap: 1rem;
+    }
+
+    .action-btn {
+        padding: 6px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+    }
+
+    .action-btn.edit {
+        color: var(--accent-primary);
+    }
+
+    .action-btn.delete {
+        color: #ef4444;
+        background: none;
+        border: none;
+        cursor: pointer;
+    }
+
+    /* Empty state icon */
+    .empty-icon-wrapper {
+        width: 80px;
+        height: 80px;
+        background: var(--bg-surface);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        color: var(--border-subtle);
+    }
+
+    .empty-icon-wrapper .material-icons {
+        font-size: 40px;
+    }
+</style>
+
+
+{{ timetable|json_script:"timetable-data" }}
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        /* =========================
+           STATE & DATA
+        ========================= */
+
+        let currentDayType = 'school';
+
+        const allEntries = JSON.parse(
+            document.getElementById('timetable-data').textContent
+        );
+
+        /* =========================
+           ICON MAPPING
+        ========================= */
+
+        function getEntryBranding(type) {
+            const branding = {
+                wake_up: { icon: 'wb_sunny', color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.15)' },
+                food: { icon: 'restaurant', color: '#14b8a6', bg: 'rgba(20, 184, 166, 0.15)' },
+                school_time: { icon: 'school', color: '#6366f1', bg: 'rgba(99, 102, 241, 0.15)' },
+                reach_home: { icon: 'home', color: '#ec4899', bg: 'rgba(236, 72, 153, 0.15)' },
+                learning_exercise: { icon: 'psychology', color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.15)' },
+                co_curricular: { icon: 'sports_basketball', color: '#f97316', bg: 'rgba(249, 115, 22, 0.15)' },
+                sleep: { icon: 'bedtime', color: '#64748b', bg: 'rgba(100, 116, 139, 0.15)' },
+                other: { icon: 'stars', color: '#22c55e', bg: 'rgba(34, 197, 94, 0.15)' }
+            };
+            return branding[type] || { icon: 'circle', color: 'var(--text-secondary)', bg: 'var(--bg-surface)' };
+        }
+
+        /* =========================
+           RENDER TIMETABLE
+        ========================= */
+
+        function renderActiveTimetable() {
+            const entries = allEntries[currentDayType] || [];
+            const amContainer = document.getElementById('am-container');
+            const pmContainer = document.getElementById('pm-container');
+            const grid = document.getElementById('timetable-grid');
+            const emptyState = document.getElementById('empty-state');
+
+            amContainer.innerHTML = '';
+            pmContainer.innerHTML = '';
+
+            if (!entries.length) {
+                grid.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            grid.style.display = 'grid';
+            emptyState.style.display = 'none';
+
+            entries.forEach(entry => {
+                const brand = getEntryBranding(entry.task_type);
+                const row = document.createElement('div');
+                row.className = 'timetable-entry';
+
+                row.innerHTML = `
+                <div class="entry-time-col">${entry.time}</div>
+                <div class="entry-icon-col" style="background: ${brand.bg}; color: ${brand.color};">
+                    <span class="material-icons">${brand.icon}</span>
+                </div>
+                <div class="entry-content-col">
+                    <span class="entry-title-text" style="color: ${brand.color};">
+                        ${entry.task_type === 'other'
+                        ? entry.custom_description
+                        : entry.task_type_display}
+                    </span>
+                    ${entry.notes ? `<p class="entry-notes-text">${entry.notes}</p>` : ''}
+                </div>
+                {% if user.role == 'teacher' or user.role == 'therapist' %}
+                <div class="entry-actions">
+                    <button class="action-icon-btn edit" onclick='event.stopPropagation(); openEditModal(${JSON.stringify(entry)})'>
+                        <span class="material-icons" style="font-size: 16px;">edit</span>
+                    </button>
+                    <button class="action-icon-btn delete" onclick="event.stopPropagation(); deleteEntry(${entry.id})">
+                        <span class="material-icons" style="font-size: 16px;">delete_outline</span>
+                    </button>
+                </div>
+                {% endif %}
+                `;
+
+                // Distribute based on AM/PM string
+                if (entry.time.includes('AM')) {
+                    amContainer.appendChild(row);
+                } else {
+                    pmContainer.appendChild(row);
+                }
+            });
+
+            // Handle column empty states
+            if (amContainer.children.length === 0) amContainer.innerHTML = '<p class="text-muted" style="font-size: 0.8rem; padding: 1rem; text-align: center;">No morning activities</p>';
+            if (pmContainer.children.length === 0) pmContainer.innerHTML = '<p class="text-muted" style="font-size: 0.8rem; padding: 1rem; text-align: center;">No afternoon activities</p>';
+        }
+
+        /* =========================
+           DAY TYPE SWITCH
+        ========================= */
+
+        window.switchDayType = function (type, btn) {
+            currentDayType = type;
+            sessionStorage.setItem('activeRoutineDayType', type);
+
+            document.querySelectorAll('.day-type-btn')
+                .forEach(b => b.classList.remove('active'));
+
+            if (btn) {
+                btn.classList.add('active');
+                document.getElementById('active-type-heading').innerText = btn.innerText;
+            } else {
+                // If called programmatically, find the button
+                const targetBtn = document.querySelector(`.day-type-btn[data-day-type="${type}"]`);
+                if (targetBtn) {
+                    targetBtn.classList.add('active');
+                    document.getElementById('active-type-heading').innerText = targetBtn.innerText;
+                }
+            }
+
+            renderActiveTimetable();
+        };
+
+        /* =========================
+           MAIN TAB SWITCH
+        ========================= */
+
+        window.switchMainTab = function (tab, btn) {
+            document.querySelectorAll('.tab-btn')
+                .forEach(b => b.classList.remove('active'));
+
+            btn.classList.add('active');
+
+            document.querySelectorAll('.tab-content')
+                .forEach(c => c.style.display = 'none');
+
+            document.getElementById(tab + '-section').style.display = 'block';
+        };
+
+        /* =========================
+           MODAL CONTROL
+        ========================= */
+
+        window.openAddModal = function () {
+            document.getElementById('modalTitle').innerText = 'New Timetable Entry';
+            document.getElementById('modal_day_type').value = currentDayType;
+            document.getElementById('modal_entry_id').value = '';
+            document.getElementById('addModal').style.display = 'flex';
+        };
+
+        window.openEditModal = function (entry) {
+            document.getElementById('modalTitle').innerText = 'Edit Timetable Entry';
+            document.getElementById('modal_entry_id').value = entry.id;
+            document.getElementById('modal_day_type').value = currentDayType;
+
+            // Parse time string "HH:MM AM/PM"
+            const [timePart, ampmPart] = entry.time.split(' ');
+            const [hourPart, minutePart] = timePart.split(':');
+
+            // Strip leading zeros for form selection
+            const hourValue = parseInt(hourPart).toString();
+            const minuteValue = parseInt(minutePart).toString();
+
+            document.querySelector('[name="hour"]').value = hourValue;
+            document.querySelector('[name="minute"]').value = minuteValue;
+            document.querySelector('[name="am_pm"]').value = ampmPart;
+            document.querySelector('[name="task_type"]').value = entry.task_type;
+            document.querySelector('[name="custom_description"]').value = entry.custom_description || '';
+            document.querySelector('[name="notes"]').value = entry.notes || '';
+
+            toggleCustomDescription(document.querySelector('[name="task_type"]'));
+            document.getElementById('addModal').style.display = 'flex';
+        };
+
+        window.closeAddModal = function () {
+            document.getElementById('addModal').style.display = 'none';
+            document.getElementById('addEntryForm').reset();
+        };
+
+        /* =========================
+           ADD ENTRY (AJAX FIX)
+        ========================= */
+
+        document.getElementById('addEntryForm')?.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const entryId = document.getElementById('modal_entry_id').value;
+            const url = entryId
+                ? `/routines/timetable/entry/${entryId}/edit/`
+                : "{% url 'routines:timetable_entry_add' routine.id %}";
+
+            try {
+                const response = await fetch(
+                    url,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: formData
+                    }
+                );
+
+                const data = await response.json();
+
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.error || 'Failed to save entry');
+                }
+
+            } catch (err) {
+                console.error(err);
+                alert('Network error. Please try again.');
+            }
+        });
+
+        window.deleteEntry = async function (id) {
+            if (!confirm('Are you sure you want to remove this schedule entry?')) return;
+
+            try {
+                const response = await fetch(`/routines/timetable/entry/${id}/delete/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                });
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Error deleting entry');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        /* =========================
+           INITIAL RENDER & PERSISTENCE
+        ========================= */
+
+        const savedDayType = sessionStorage.getItem('activeRoutineDayType');
+        if (savedDayType) {
+            currentDayType = savedDayType;
+            window.switchDayType(currentDayType);
+        } else {
+            renderActiveTimetable();
+        }
+
+    });
 </script>
-{% endblock %} 
+{% endblock %}

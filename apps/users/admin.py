@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.translation import gettext_lazy as _
-from .models import CustomUser, ParentProfile, TherapistProfile, TeacherProfile, ChildProfile
+from .models import CustomUser, TeacherProfile, ChildProfile, ParentProfile, ParentDevice
 
 
 class CustomUserAdmin(UserAdmin):
@@ -30,28 +30,6 @@ class CustomUserAdmin(UserAdmin):
     )
 
 
-@admin.register(ParentProfile)
-class ParentProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'emergency_contact', 'children_count')
-    search_fields = ('user__email', 'user__first_name', 'user__last_name')
-    filter_horizontal = ('children',)
-    
-    def children_count(self, obj):
-        return obj.children.count()
-    children_count.short_description = 'Number of Children'
-
-
-@admin.register(TherapistProfile)
-class TherapistProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'license_number', 'years_of_experience', 'assigned_children_count')
-    search_fields = ('user__email', 'user__first_name', 'user__last_name', 'license_number')
-    filter_horizontal = ('assigned_children',)
-    
-    def assigned_children_count(self, obj):
-        return obj.assigned_children.count()
-    assigned_children_count.short_description = 'Assigned Children'
-
-
 @admin.register(TeacherProfile)
 class TeacherProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'classroom_info', 'grade_level', 'assigned_children_count')
@@ -65,11 +43,21 @@ class TeacherProfileAdmin(admin.ModelAdmin):
 
 @admin.register(ChildProfile)
 class ChildProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'age', 'learning_level', 'primary_parent', 'primary_therapist')
+    list_display = ('user', 'age', 'learning_level', 'primary_teacher')
     list_filter = ('learning_level', 'age')
     search_fields = ('user__email', 'user__first_name', 'user__last_name')
-    autocomplete_fields = ('primary_parent', 'primary_therapist', 'primary_teacher')
+    autocomplete_fields = ('primary_teacher',)
 
 
 # Register the custom user admin
 admin.site.register(CustomUser, CustomUserAdmin)
+
+@admin.register(ParentProfile)
+class ParentProfileAdmin(admin.ModelAdmin):
+    list_display = ('user',)
+    filter_horizontal = ('assigned_children',)
+
+@admin.register(ParentDevice)
+class ParentDeviceAdmin(admin.ModelAdmin):
+    list_display = ('user', 'fcm_token', 'device_id', 'updated_at')
+    search_fields = ('user__email', 'fcm_token')

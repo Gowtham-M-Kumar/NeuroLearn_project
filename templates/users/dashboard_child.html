@@ -1,37 +1,291 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Child Dashboard - NEURO Learning Platform{% endblock %}
+{% block page_header_icon %}{% endblock %}
+{% block page_title %}Welcome, {{user.first_name|default:user.username}}{% endblock %}
+{% block page_subtitle %}Your learning space is ready.{% endblock %}
+
+{% block extra_head %}
+<style>
+    .dashboard-section-header {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .dashboard-section-header .material-icons {
+        font-size: 2rem;
+        color: var(--accent-primary);
+    }
+
+    .dashboard-section-header h3 {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .dashboard-main-section {
+        background: linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(99, 102, 241, 0.12) 100%);
+        border-radius: 24px;
+        border: 1px solid var(--border-subtle);
+        padding: 2.5rem 2rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .dashboard-module-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2.5rem;
+    }
+
+    .dashboard-module-card {
+        display: flex;
+        flex-direction: column;
+        padding: 2.5rem 2rem;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 24px;
+        text-decoration: none;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .dashboard-module-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, var(--accent-primary-light), transparent);
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        z-index: 0;
+    }
+
+    .dashboard-module-card:hover {
+        transform: translateY(-12px);
+        border-color: var(--accent-secondary);
+        box-shadow: 0 24px 48px rgba(6, 182, 212, 0.25);
+    }
+
+    .dashboard-module-card:hover::before {
+        opacity: 0.3;
+    }
+
+    .dashboard-module-card>* {
+        position: relative;
+        z-index: 1;
+    }
+
+
+
+    .dashboard-module-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        letter-spacing: -0.3px;
+    }
+
+    .dashboard-module-description {
+        font-size: 0.95rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+        flex-grow: 1;
+    }
+
+    .dashboard-module-arrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--accent-secondary);
+        font-weight: 700;
+        font-size: 1rem;
+        transition: gap 0.3s ease;
+    }
+
+    .dashboard-module-card:hover .dashboard-module-arrow {
+        gap: 0.75rem;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-main-section {
+            padding: 2rem 1.5rem;
+        }
+
+        .dashboard-module-grid {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        .dashboard-module-card {
+            padding: 2rem;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="child-dashboard-duo py-5">
-    <div class="duo-dashboard-container mx-auto">
-        <div class="duo-card welcome-card text-center shadow-sm mb-4" style="background: linear-gradient(rgba(255,255,255,0.35), rgba(255,255,255,0.35)), url('/static/img/header_bg.jpg') center center/cover no-repeat;">
-            <h2 class="duo-title mb-2">
-                <span class="me-2" style="font-size:2.5rem;">👋</span>Welcome, {{ user.get_full_name }}!
-            </h2>
-            <p class="duo-lead">Ready to learn and have fun?</p>
+<div class="container-custom">
+
+    <!-- Push Notification Registration for Parents/Caregivers -->
+    <!-- Notification settings moved to Profile/Settings page -->
+
+    <!-- SECTION 1: DASHBOARD OVERVIEW -->
+    <section class="dashboard-main-section">
+        <div class="dashboard-section-header">
+            <span class="material-icons">dashboard</span>
+            <h3>Dashboard Overview</h3>
         </div>
-        <div class="duo-card shadow-sm p-4">
-            <h3 class="duo-section-title mb-4 text-center">Start Learning</h3>
-            <div class="duo-dashboard-grid">
-                <a href="{% url 'learning:alphabet_learning' %}" class="duo-module-card duo-green text-center d-flex flex-column align-items-center justify-content-center text-decoration-none">
-                    <span class="duo-icon mb-2">🔤</span>
-                    <span class="duo-module-title">Alphabet Learning & Tracing</span>
-                </a>
-                <a href="{% url 'learning:number_learning' %}" class="duo-module-card duo-blue text-center d-flex flex-column align-items-center justify-content-center text-decoration-none">
-                    <span class="duo-icon mb-2">🔢</span>
-                    <span class="duo-module-title">Number Learning & Counting</span>
-                </a>
-                <a href="{% url 'learning:word_learning' %}" class="duo-module-card duo-purple text-center d-flex flex-column align-items-center justify-content-center text-decoration-none">
-                    <span class="duo-icon mb-2">🧸</span>
-                    <span class="duo-module-title">Word Learning & Matching</span>
-                </a>
-                <a href="{% url 'learning:progress_dashboard' %}" class="duo-module-card duo-gold text-center d-flex flex-column align-items-center justify-content-center text-decoration-none">
-                    <span class="duo-icon mb-2">📈</span>
-                    <span class="duo-module-title">Progress Dashboard</span>
-                </a>
+
+        <div class="dashboard-module-grid">
+            <a href="/learning/" class="dashboard-module-card" id="card-learning-feature">
+
+                <h4 class="dashboard-module-title">Learning</h4>
+                <p class="dashboard-module-description">Practice letters, numbers, and words through interactive
+                    learning modules.</p>
+                <span class="dashboard-module-arrow">
+                    Start Learning
+                    <span class="material-icons" style="font-size: 1.2rem;">arrow_forward</span>
+                </span>
+            </a>
+            <a href="/games/" class="dashboard-module-card" id="card-games-feature">
+
+                <h4 class="dashboard-module-title">Games</h4>
+                <p class="dashboard-module-description">Engaging educational games designed to reinforce key
+                    neuro-developmental skills.</p>
+                <span class="dashboard-module-arrow">
+                    Start Games
+                    <span class="material-icons" style="font-size: 1.2rem;">arrow_forward</span>
+                </span>
+            </a>
+            <a href="/routines/" class="dashboard-module-card" id="card-routines-feature">
+
+                <h4 class="dashboard-module-title">Routines</h4>
+                <p class="dashboard-module-description">Follow your daily structured activities to build consistency and
+                    confidence.</p>
+                <span class="dashboard-module-arrow">
+                    View Routines
+                    <span class="material-icons" style="font-size: 1.2rem;">arrow_forward</span>
+                </span>
+            </a>
+            <a href="/drawing/" class="dashboard-module-card" id="card-drawing-feature">
+
+                <h4 class="dashboard-module-title">Drawing</h4>
+                <p class="dashboard-module-description">A creative space to express yourself and explore artistic tasks.
+                </p>
+                <span class="dashboard-module-arrow">
+                    Open Studio
+                    <span class="material-icons" style="font-size: 1.2rem;">arrow_forward</span>
+                </span>
+            </a>
+            <a href="/messaging/" class="dashboard-module-card" id="card-messaging-feature">
+
+                <h4 class="dashboard-module-title">Messaging</h4>
+                <p class="dashboard-module-description">Communicate with your teachers and supportive community safely.
+                </p>
+                <span class="dashboard-module-arrow">
+                    Open Messages
+                    <span class="material-icons" style="font-size: 1.2rem;">arrow_forward</span>
+                </span>
+            </a>
+        </div>
+    </section>
+
+    
+
+        <!-- SECTION 5: CREATIVE SPACE -->
+        <section class="section-card">
+            <h3 class="section-title-sm"><span class="material-icons">brush</span>Creative Space</h3>
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <h4 style="font-size: 1.25rem; margin-bottom: 0.25rem;">Drawing Studio</h4>
+                    <p class="feature-desc">Create and explore visually through our professional canvas tools.</p>
+                </div>
+                <a href="/drawing/" class="cta-btn cta-outline">Open Studio</a>
             </div>
-        </div>
+        </section>
+
+        <!-- SECTION 6: WEEKLY SUMMARY -->
+        <section class="section-card">
+            <h3 class="section-title-sm"><span class="material-icons">analytics</span>Weekly Summary</h3>
+            <div class="stat-row">
+                <div class="stat-item">
+                    <span class="stat-value">12</span>
+                    <span class="stat-label">Activities Done</span>
+                </div>
+                <div style="width: 1px; height: 32px; background: var(--border-subtle);"></div>
+                <div class="stat-item">
+                    <span class="stat-value">85%</span>
+                    <span class="stat-label">Consistency</span>
+                </div>
+            </div>
+        </section>
+
     </div>
-</div>
-{% endblock %} 
+    {% endblock %}
+
+    {% block extra_js %}
+    <!-- Firebase SDKs (Compat Version) -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js"></script>
+
+    <!-- FCM Registration Logic -->
+    <script src="{% static 'js/fcm_registration.js' %}"></script>
+
+    <script>
+        // Firebase Configuration - PASTE YOUR CONFIG HERE
+        const firebaseConfig = {
+            // apiKey: "YOUR_API_KEY",
+            // authDomain: "YOUR_AUTH_DOMAIN",
+            // projectId: "YOUR_PROJECT_ID",
+            // storageBucket: "YOUR_STORAGE_BUCKET",
+            // messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            // appId: "YOUR_APP_ID"
+        };
+
+        if (firebaseConfig.apiKey) {
+            firebase.initializeApp(firebaseConfig);
+        } else {
+            console.warn('Firebase API Key missing in dashboard_child.html');
+            const fcmStatus = document.getElementById('fcm-status');
+            if (fcmStatus) fcmStatus.innerText = 'Firebase needs configuration to enable alerts.';
+        }
+
+        // Wrapped registration function to show UI feedback
+        async function startNotificationRegistration() {
+            const btn = document.getElementById('btn-enable-notifications');
+            const status = document.getElementById('fcm-status');
+
+            if (!firebaseConfig.apiKey) {
+                alert('Please configure Firebase in your dashboard template first!');
+                return;
+            }
+
+            btn.innerText = 'Connecting...';
+            btn.disabled = true;
+            if (status) status.innerText = 'Requesting permission...';
+
+            try {
+                // Calling the function from fcm_registration.js
+                await registerFCM();
+                if (status) status.innerText = '✅ Notifications Enabled!';
+                btn.innerText = 'Active';
+            } catch (err) {
+                console.error(err);
+                if (status) status.innerText = '❌ Failed to enable. Check console.';
+                btn.innerText = 'Retry';
+                btn.disabled = false;
+            }
+        }
+
+        // Update the button click handler
+        const notificationBtn = document.getElementById('btn-enable-notifications');
+        if (notificationBtn) {
+            notificationBtn.onclick = startNotificationRegistration;
+        }
+    </script>
+    {% endblock %}

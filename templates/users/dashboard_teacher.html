@@ -1,25 +1,422 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Teacher Dashboard - NEURO Learning Platform{% endblock %}
+{%block page_title%}Teacher Analytics Overview{% endblock %}
+{%block page_subtitle%}Track and monitor student performance across all activities.{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Scoped Teacher Dashboard Styles */
+    .analytics-container {
+        display: flex;
+        flex-direction: column;
+        gap: 2.5rem;
+    }
+
+    /* KPI Section */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .kpi-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 20px;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--accent-primary);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    .kpi-label {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .kpi-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        letter-spacing: -1px;
+    }
+
+    /* Activity Overview */
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .section-header h3 {
+        font-size: 1.3rem;
+        font-weight: 800;
+        margin: 0;
+        color: var(--text-primary);
+    }
+
+    .overview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .overview-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 24px;
+        padding: 2.5rem 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .overview-card:hover {
+        border-color: var(--accent-secondary);
+    }
+
+    /* Attention & Feed Grid */
+    .dashboard-secondary-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr;
+        gap: 2.5rem;
+    }
+
+    @media (max-width: 1024px) {
+        .dashboard-secondary-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* List Item Styles */
+    .data-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .data-item {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 16px;
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.2s ease;
+    }
+
+    .data-item:hover {
+        background: rgba(99, 102, 241, 0.05);
+        transform: translateX(5px);
+    }
+
+    .student-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .avatar-sm {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+    }
+
+    .status-badge {
+        padding: 0.4rem 0.8rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .badge-warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .badge-error {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .badge-success {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .empty-state {
+        padding: 3rem 2rem;
+        border: 2px dashed var(--border-subtle);
+        border-radius: 20px;
+        text-align: center;
+        color: var(--text-secondary);
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    .view-details-link {
+        text-decoration: none;
+        text-align: center;
+        padding: 0.75rem;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        background: var(--bg-main);
+        color: var(--text-primary);
+        border: 1px solid var(--border-subtle);
+        transition: all 0.2s ease;
+    }
+
+    .view-details-link:hover {
+        background: var(--accent-primary);
+        color: white;
+        border-color: var(--accent-primary);
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="child-dashboard-duo py-5">
-    <div class="duo-dashboard-container mx-auto">
-        <div class="duo-card welcome-card text-center shadow-sm mb-4">
-            <h2 class="duo-title mb-2">
-                <span class="me-2" style="font-size:2.5rem;">👩‍🏫</span>Welcome, {{ user.get_full_name }}!
-            </h2>
-            <p class="duo-lead">Manage your classroom and track student progress.</p>
+<div class="analytics-container">
+
+    <!-- KPI SUMMARY CARDS -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <span class="kpi-label">Total Students</span>
+            <span class="kpi-value">{{ kpis.total_students }}</span>
         </div>
-        <div class="duo-card shadow-sm p-4">
-            <h3 class="duo-section-title mb-4 text-center">Teacher Dashboard</h3>
-            <div class="duo-dashboard-grid">
-                <div class="duo-module-card duo-blue text-center d-flex flex-column align-items-center justify-content-center">
-                    <span class="duo-icon mb-2">🛠️</span>
-                    <span class="duo-module-title">Classroom management and learning activity features will be available in Phase 2.</span>
-                </div>
-            </div>
+        <div class="kpi-card">
+            <span class="kpi-label">Activities Done</span>
+            <span class="kpi-value">{{ kpis.total_activities }}</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-label">Avg. Accuracy</span>
+            <span class="kpi-value">{{ kpis.avg_accuracy }}%</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-label">Avg. Engagement</span>
+            <span class="kpi-value">{{ kpis.avg_engagement }}m</span>
         </div>
     </div>
+
+    <!-- ACTIVITY OVERVIEW SECTION -->
+    <section>
+        <div class="section-header">
+            <span class="material-icons" style="color: var(--accent-primary)">insights</span>
+            <h3>Progress Summary</h3>
+        </div>
+        <div class="overview-grid">
+
+            <!-- Learning -->
+            <div class="overview-card">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span class="material-icons" style="color: #8b5cf6;">school</span>
+                    <h4 class="kpi-label" style="margin:0;">Learning Progress</h4>
+                </div>
+                <div style="display: flex; align-items: flex-end; justify-content: space-between;">
+                    <span class="kpi-value">{{ overview.learning }}%</span>
+                    <span
+                        class="status-badge {% if overview.learning > 70 %}badge-success{% else %}badge-warning{% endif %}">
+                        {% if overview.learning > 70 %}On Track{% else %}Lagging{% endif %}
+                    </span>
+                </div>
+                <div class="progress-minimal">
+                    <div class="progress-bar-minimal" style="width: {{ overview.learning }}%; background: #8b5cf6;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Games -->
+            <div class="overview-card">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span class="material-icons" style="color: #f59e0b;">sports_esports</span>
+                    <h4 class="kpi-label" style="margin:0;">Game Performance</h4>
+                </div>
+                <div style="display: flex; align-items: flex-end; justify-content: space-between;">
+                    <span class="kpi-value">{{ overview.games }}%</span>
+                    <span class="status-badge badge-warning">Needs Review</span>
+                </div>
+                <div class="progress-minimal">
+                    <div class="progress-bar-minimal" style="width: {{ overview.games }}%; background: #f59e0b;"></div>
+                </div>
+            </div>
+
+            <!-- Drawing -->
+            <div class="overview-card">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span class="material-icons" style="color: #10b981;">palette</span>
+                    <h4 class="kpi-label" style="margin:0;">Creative Engagement</h4>
+                </div>
+                <div style="display: flex; align-items: flex-end; justify-content: space-between;">
+                    <span class="kpi-value">{{ overview.drawing }}%</span>
+                    <span class="status-badge badge-success">Active</span>
+                </div>
+                <div class="progress-minimal">
+                    <div class="progress-bar-minimal" style="width: {{ overview.drawing }}%; background: #10b981;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messaging -->
+            <div class="overview-card" style="cursor: pointer;"
+                onclick="window.location.href='{%url 'messaging:dashboard'%}'">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span class="material-icons" style="color: #8b5cf6;">chat</span>
+                    <h4 class="kpi-label" style="margin:0;">Messages</h4>
+                </div>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 1.5rem;">
+                    <span style="font-size: 0.95rem; color: var(--text-secondary);">Chat with Students</span>
+                    <span class="material-icons" style="color: var(--accent-primary);">arrow_forward</span>
+                </div>
+                <a href="{%url 'messaging:dashboard'%}" class="view-details-link" style="margin-top: 1rem;">Open
+                    Messages</a>
+            </div>
+        </div>
+    </section>
+
+    <div class="dashboard-secondary-grid">
+        <!-- STUDENTS NEEDING ATTENTION -->
+        <section>
+            <div class="section-header">
+                <span class="material-icons" style="color: #ef4444">notification_important</span>
+                <h3>Students Needing Attention</h3>
+            </div>
+            <div class="data-list">
+                {% for child in needing_attention %}
+                <div class="data-item">
+                    <div class="student-info">
+                        {% if child.user.profile_picture %}
+                        <img src="{{ child.user.profile_picture.url }}" class="avatar-sm" style="object-fit: cover;">
+                        {% else %}
+                        <div class="avatar-sm">{{ child.user.first_name|first|upper }}</div>
+                        {% endif %}
+                        <div>
+                            <div style="font-weight: 700; color: var(--text-primary);">{{ child.user.get_full_name }}
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);">Last seen: {% if                 child.user.last_login %}{{ child.user.last_login|timesince }} ago{% else %}Never{% endif                 %}</div>
+                        </div>
+                    </div>
+                    <a href="{%url 'users:user_detail' child.user.id%}" class="material-icons"
+                        style="color: var(--text-secondary); text-decoration: none;">open_in_new</a>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <span class="material-icons"
+                        style="font-size: 3rem; opacity: 0.3; margin-bottom: 1rem;">check_circle</span>
+                    <p>All students are meeting their goals!</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- RECENT ACTIVITY FEED -->
+        <section>
+            <div class="section-header">
+                <span class="material-icons" style="color: var(--accent-secondary)">schedule</span>
+                <h3>Live Activity Feed</h3>
+                <a href="{%url 'users:notifications'%}"
+                    style="margin-left: auto; font-size: 0.8rem; color: var(--accent-primary); text-decoration: none; font-weight: 700;">View
+                    All →</a>
+            </div>
+            <div class="data-list">
+                {% for activity in recent_activity_feed %}
+                <div class="data-item">
+                    <div style="display: flex; align-items: center; gap: 1rem; flex: 1;">
+                        <div class="avatar-sm"
+                            style="background: {{ activity.color }}22; color: {{ activity.color }}; border-radius: 14px;">
+                            <span class="material-icons" style="font-size: 1.2rem;">{{ activity.icon }}</span>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div
+                                style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                {{ activity.message }}
+                            </div>
+                            <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.15rem;">
+                                {{ activity.timestamp|timesince }} ago
+                            </div>
+                        </div>
+                        <span class="status-badge"
+                            style="background: {{ activity.color }}15; color: {{ activity.color }}; border-color: {{ activity.color }}30; flex-shrink: 0;">{{               activity.label }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <span class="material-icons"
+                        style="font-size: 3rem; opacity: 0.3; margin-bottom: 1rem;">history</span>
+                    <p>No activity recorded yet.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    <!-- MY CLASS ROSTER -->
+    <section>
+        <div class="section-header">
+            <span class="material-icons" style="color: var(--accent-primary)">groups</span>
+            <h3>My Class Roster</h3>
+        </div>
+        <div class="data-list">
+            {% for child in assigned_children %}
+            <div class="data-item">
+                <div class="student-info">
+                    {% if child.user.profile_picture %}
+                    <img src="{{ child.user.profile_picture.url }}" class="avatar-sm"
+                        style="width: 44px; height: 44px; object-fit: cover;">
+                    {% else %}
+                    <div class="avatar-sm" style="width: 44px; height: 44px; font-size: 1rem;">{{             child.user.first_name|first|upper }}</div>
+                    {% endif %}
+                    <div>
+                        <div style="font-weight: 700; color: var(--text-primary);">{{ child.user.get_full_name }}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Age: {{ child.age }} • Level: {{               child.learning_level|title }}</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="text-align: right; display: none;" class="d-md-block">
+                        <div style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase;">Last
+                            Active</div>
+                        <div style="font-size: 0.8rem; font-weight: 600;">{{ child.user.last_login|timesince }} ago
+                        </div>
+                    </div>
+                    <a href="{%url 'users:user_detail' child.user.id%}" class="view-details-link"
+                        style="padding: 0.5rem 1rem; font-size: 0.8rem;">
+                        View Profile
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <p>No students available.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
 </div>
-{% endblock %} 
+{%endblock%}

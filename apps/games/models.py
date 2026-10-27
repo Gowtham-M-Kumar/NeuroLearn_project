@@ -61,6 +61,31 @@ class ColorMatchingLevel(models.Model):
     def __str__(self):
         return f"Level {self.game.level} Configuration"
 
+class Animal(models.Model):
+    """Animal model for the matching game"""
+    name = models.CharField(max_length=100, unique=True)
+    image = models.ImageField(upload_to='games/animals/')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+class AnimalMatchingLevel(models.Model):
+    """Configuration for each level of the animal matching game"""
+    level = models.IntegerField(unique=True)
+    name = models.CharField(max_length=100)
+    animal_count = models.IntegerField(help_text="Number of animals to match in this level")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['level']
+
+    def __str__(self):
+        return f"{self.name} - Level {self.level}"
+
 class GameSession(models.Model):
     """Track individual game sessions for children"""
     child = models.ForeignKey(User, on_delete=models.CASCADE, related_name='game_sessions')
@@ -87,6 +112,15 @@ class ColorMatchingSession(models.Model):
 
     def __str__(self):
         return f"Color Matching Session - {self.game_session}"
+
+class AnimalMatchingSession(models.Model):
+    """Specific session data for animal matching game"""
+    game_session = models.OneToOneField(GameSession, on_delete=models.CASCADE, related_name='animal_matching_data')
+    matches_found = models.IntegerField(default=0)
+    total_attempts = models.IntegerField(default=0)
+    
+    def __str__(self):
+        return f"Animal Matching Session - {self.game_session}"
 
 class GameProgress(models.Model):
     """Track overall progress for each child in each game"""

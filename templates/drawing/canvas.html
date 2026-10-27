@@ -1,68 +1,777 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Drawing Canvas - NEURO Learn{% endblock %}
+{% block title %}Drawing Canvas - NEURO Learning Platform{% endblock %}
+
+{% block page_header_icon %}{% endblock %}
+
+{% block page_title %}{{ drawing.title|default:"New Drawing" }}{% endblock %}
+{% block page_subtitle %}Canvas Workspace{% endblock %}
+
+{% block header_actions %}
+<button class="btn btn-primary" id="saveBtn">
+    <span class="material-icons">save</span>
+    Save
+</button>
+<button class="btn btn-outline-secondary" id="exportBtn">
+    <span class="material-icons">download</span>
+    Export
+</button>
+<a href="{% url 'drawing:drawing_dashboard' %}" class="btn btn-outline-secondary">
+    <span class="material-icons">arrow_back</span>
+    Back
+</a>
+{% endblock %}
+
+
+{% block extra_head %}
+<style>
+    .canvas-page {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .canvas-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 1.5rem;
+    }
+
+    /* We are removing the custom .canvas-header styles since we used blocks now */
+
+    .canvas-workspace {
+        background: var(--bg-surface);
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-subtle);
+        min-width: 0;
+        /* Prevent grid blowout */
+    }
+
+    .sidebar {
+        min-width: 300px;
+    }
+
+    .info-card {
+        background: var(--bg-surface);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-subtle);
+    }
+
+    .info-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    .info-header .material-icons {
+        color: var(--accent-primary);
+    }
+
+    .info-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.95rem;
+    }
+
+    .info-label {
+        color: var(--text-secondary);
+    }
+
+    .info-value {
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+
+    .status-completed {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .status-draft {
+        background: #fff3e0;
+        color: #ef6c00;
+    }
+
+    .canvas-tools {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        align-items: center;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--border-subtle);
+    }
+
+    .tool-group {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .tool-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        border: 2px solid var(--border-subtle);
+        background: var(--bg-main);
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+    }
+
+    .tool-btn:hover {
+        border-color: var(--accent-primary);
+        background: var(--accent-primary-light);
+        transform: translateY(-2px);
+    }
+
+    .tool-btn.active {
+        background: var(--accent-primary);
+        color: white;
+        border-color: var(--accent-primary);
+    }
+
+    .color-picker-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .color-picker {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        border: 2px solid var(--border-subtle);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        padding: 0;
+    }
+
+    .color-picker:hover {
+        transform: scale(1.05);
+        border-color: var(--accent-primary);
+    }
+
+    .brush-size-control {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .brush-size-slider {
+        width: 120px;
+        height: 6px;
+        border-radius: 3px;
+        background: var(--border-subtle);
+        outline: none;
+        -webkit-appearance: none;
+    }
+
+    .brush-size-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--accent-primary);
+        cursor: pointer;
+    }
+
+    .brush-size-value {
+        font-weight: 700;
+        color: var(--accent-primary);
+        min-width: 25px;
+        font-size: 0.9rem;
+    }
+
+    .canvas-wrapper {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+        border: 2px solid var(--border-subtle);
+        overflow: auto;
+        max-width: 100%;
+    }
+
+    #drawingCanvas {
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        cursor: crosshair;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        display: block;
+        max-width: 100%;
+        height: auto;
+    }
+
+    .save-indicator {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        background: var(--accent-primary);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.3s ease;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+    }
+
+    .save-indicator.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .save-indicator.success {
+        background: #4CAF50;
+    }
+
+    .save-indicator.error {
+        background: #f44336;
+    }
+
+    /* Ensure action buttons in header look good inside the block */
+    .btn {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        font-size: 0.9rem;
+    }
+
+    .btn-primary {
+        background: var(--accent-primary);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: var(--accent-primary-dark);
+        color: white;
+    }
+
+    .btn-outline-secondary {
+        background: transparent;
+        border: 1px solid var(--border-subtle);
+        color: var(--text-primary);
+    }
+
+    .btn-outline-secondary:hover {
+        background: var(--bg-surface);
+        border-color: var(--text-secondary);
+    }
+
+    @media (max-width: 1200px) {
+        #drawingCanvas {
+            width: 100% !important;
+            height: auto !important;
+        }
+
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+            min-width: auto;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .canvas-workspace {
+            padding: 1rem;
+        }
+
+        .canvas-tools {
+            gap: 0.75rem;
+            justify-content: center;
+        }
+
+        .tool-group {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .brush-size-slider {
+            width: 100px;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="duo-dashboard-container mx-auto py-5">
-    <div class="duo-card shadow-sm p-4" style="max-width: 1000px; margin: 0 auto;">
-        <h2 class="duo-title mb-3 text-center">Drawing Canvas</h2>
-        <div class="mb-4 text-center text-muted">Create and express your creativity!</div>
-        <div class="d-flex flex-row gap-4 align-items-start">
-            <!-- Toolbar -->
-            <div class="d-flex flex-column align-items-center gap-3" style="min-width: 70px;">
-                <button class="btn btn-outline-secondary tool-button" data-tool="brush" title="Brush">🖌️</button>
-                <button class="btn btn-outline-secondary tool-button" data-tool="eraser" title="Eraser">🧽</button>
-                <button class="btn btn-outline-secondary tool-button" data-tool="clear" title="Clear Canvas">🗑️</button>
-                <button class="btn btn-outline-secondary tool-button" data-tool="undo" title="Undo">↩️</button>
-                <button class="btn btn-outline-secondary tool-button" data-tool="redo" title="Redo">↪️</button>
+<div class="canvas-page">
+    <div class="canvas-container">
+
+        <div class="content-grid">
+            <!-- Canvas Workspace -->
+            <div class="canvas-workspace">
+                <!-- Tools -->
+                <div class="canvas-tools">
+                    <!-- Drawing Tools -->
+                    <div class="tool-group">
+                        <button class="tool-btn active" id="brushTool" data-tool="brush" title="Brush">
+                            <span class="material-icons">brush</span>
+                        </button>
+                        <button class="tool-btn" id="eraserTool" data-tool="eraser" title="Eraser">
+                            <span class="material-icons">cleaning_services</span>
+                        </button>
+                    </div>
+
+                    <!-- Action Tools -->
+                    <div class="tool-group">
+                        <button class="tool-btn" id="undoBtn" title="Undo">
+                            <span class="material-icons">undo</span>
+                        </button>
+                        <button class="tool-btn" id="redoBtn" title="Redo">
+                            <span class="material-icons">redo</span>
+                        </button>
+                        <button class="tool-btn" id="clearBtn" title="Clear Canvas">
+                            <span class="material-icons">delete</span>
+                        </button>
+                    </div>
+
+                    <!-- Color Picker -->
+                    <div class="color-picker-wrapper">
+                        <span class="tool-label">Color:</span>
+                        <input type="color" id="colorPicker" class="color-picker" value="#000000">
+                    </div>
+
+                    <!-- Brush Size -->
+                    <div class="brush-size-control">
+                        <span class="tool-label">Size:</span>
+                        <input type="range" id="brushSize" class="brush-size-slider" min="1" max="30" value="3">
+                        <span class="brush-size-value" id="brushSizeValue">3</span>
+                    </div>
+                </div>
+
+                <!-- Canvas -->
+                <div class="canvas-wrapper">
+                    <canvas id="drawingCanvas" width="1000" height="600"></canvas>
+                </div>
             </div>
-            <!-- Canvas and Controls -->
-            <div class="flex-grow-1">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="fw-bold" style="font-size: 1.15rem;">{{ drawing.title|default:"New Drawing" }}</div>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-success btn-sm" id="saveBtn">Save</button>
-                        <button class="btn btn-outline-primary btn-sm" id="newVersionBtn">New Version</button>
-                        <button class="btn btn-outline-secondary btn-sm" id="exportBtn">Export</button>
-                        <a href="{% url 'drawing:drawing_dashboard' %}" class="btn btn-outline-secondary btn-sm">Back</a>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                {% if drawing %}
+                <!-- Info Card -->
+                <div class="info-card">
+                    <div class="info-header">
+                        <span class="material-icons">info</span>
+                        Metadata
+                    </div>
+                    <div class="info-list">
+                        <div class="info-item">
+                            <span class="info-label">Created</span>
+                            <span class="info-value">{{ drawing.created_at|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Last Updated</span>
+                            <span class="info-value">{{ drawing.updated_at|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Status</span>
+                            {% if drawing.is_completed %}
+                            <span class="status-badge status-completed">Completed</span>
+                            {% else %}
+                            <span class="status-badge status-draft">In Progress</span>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
-                <div class="canvas-wrapper" style="background: #fff; border-radius: 1.2rem; box-shadow: 0 2px 12px rgba(60,60,60,0.10); overflow: hidden; display: flex; justify-content: center; align-items: center;">
-                    <canvas id="drawingCanvas" width="800" height="600" style="border: 2px solid #E6F4EA; border-radius: 1rem;"></canvas>
-                </div>
-                <div class="d-flex flex-row gap-3 mt-3 align-items-center">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="fw-bold">Color:</span>
-                        <input type="color" id="colorPicker" value="#000000" style="width: 36px; height: 36px; border: none; border-radius: 50%; background: #F7F7F7;">
+
+                <!-- Sharing Settings -->
+                <div class="info-card">
+                    <div class="info-header">
+                        <span class="material-icons">share</span>
+                        Sharing
                     </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="fw-bold">Brush Size:</span>
-                        <input type="range" id="brushSize" min="2" max="20" value="2" style="width: 120px;">
-                        <span id="brushSizeValue">2</span>
+                    <div class="info-list">
+                        <div class="info-item">
+                            <span class="info-label">Parents</span>
+                            <span class="material-icons"
+                                style="color: {% if drawing.shared_with_parents %}#4CAF50{% else %}#ccc{% endif %}">
+                                {% if drawing.shared_with_parents %}check_circle{% else %}cancel{% endif %}
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Therapist</span>
+                            <span class="material-icons"
+                                style="color: {% if drawing.shared_with_therapists %}#4CAF50{% else %}#ccc{% endif %}">
+                                {% if drawing.shared_with_therapists %}check_circle{% else %}cancel{% endif %}
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Teachers</span>
+                            <span class="material-icons"
+                                style="color: {% if drawing.shared_with_teachers %}#4CAF50{% else %}#ccc{% endif %}">
+                                {% if drawing.shared_with_teachers %}check_circle{% else %}cancel{% endif %}
+                            </span>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Delete Action -->
+                <div class="info-card" style="border-color: #ffebee; background: #fff5f5;">
+                    <div class="info-header" style="color: #d32f2f;">
+                        <span class="material-icons">delete_forever</span>
+                        Danger Zone
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+                        Once deleted, this drawing cannot be recovered.
+                    </p>
+                    <form action="{% url 'drawing:drawing_delete' drawing.id %}" method="POST"
+                        onsubmit="return confirm('Are you sure you want to delete this drawing? This action cannot be undone.');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn"
+                            style="width: 100%; background: #d32f2f; color: white; justify-content: center;">
+                            Delete Drawing
+                        </button>
+                    </form>
+                </div>
+                {% else %}
+                <!-- New Drawing State -->
+                <div class="info-card">
+                    <div class="info-header">
+                        <span class="material-icons">info</span>
+                        New Drawing
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                        Start drawing on the canvas! Metadata and sharing options will be available after you save.
+                    </p>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
+
+<!-- Save Indicator -->
 <div class="save-indicator" id="saveIndicator">
-    <span id="saveMessage"></span>
+    <span class="material-icons">check_circle</span>
+    <span id="saveMessage">Saved!</span>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/drawing_canvas.js' %}"></script>
 <script>
-// Minimal JS for color picker and brush size
-const colorPicker = document.getElementById('colorPicker');
-const brushSize = document.getElementById('brushSize');
-const brushSizeValue = document.getElementById('brushSizeValue');
-if (brushSize && brushSizeValue) {
-    brushSize.addEventListener('input', function() {
-        brushSizeValue.textContent = this.value;
+    // Configuration
+    const IS_EDIT_MODE = {% if drawing %}true{% else %} false{% endif %};
+    const CSRF_TOKEN = '{{ csrf_token }}';
+    const SAVE_URL = '{% if drawing %}{% url "drawing:save_drawing_data" drawing.id %}{% else %}{% url "drawing:api_create_drawing" %}{% endif %}';
+    const LOAD_URL = '{% if drawing %}{% url "drawing:load_drawing_data" drawing.id %}{% else %}null{% endif %}';
+
+    // Drawing Canvas Implementation
+    const canvas = document.getElementById('drawingCanvas');
+    const ctx = canvas.getContext('2d');
+    const colorPicker = document.getElementById('colorPicker');
+    const brushSize = document.getElementById('brushSize');
+    const brushSizeValue = document.getElementById('brushSizeValue');
+    const saveBtn = document.getElementById('saveBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const saveIndicator = document.getElementById('saveIndicator');
+    const saveMessage = document.getElementById('saveMessage');
+
+    // Make canvas responsive
+    function resizeCanvas() {
+        const wrapper = canvas.parentElement;
+        const maxWidth = wrapper.clientWidth - 32; // Account for padding
+        const aspectRatio = canvas.height / canvas.width;
+
+        if (window.innerWidth <= 1200 && canvas.width > maxWidth) {
+            canvas.style.width = maxWidth + 'px';
+            canvas.style.height = (maxWidth * aspectRatio) + 'px';
+        } else {
+            canvas.style.width = '';
+            canvas.style.height = '';
+        }
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Drawing state
+    let isDrawing = false;
+    let currentTool = 'brush';
+    let currentColor = '#000000';
+    let currentSize = 3;
+    let strokes = [];
+    let currentStroke = null;
+    let undoStack = [];
+    let redoStack = [];
+
+    // Initialize canvas
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    // Tool selection
+    document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.tool-btn[data-tool]').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentTool = this.dataset.tool;
+        });
     });
-}
-// (You can integrate this with your DrawingCanvas JS logic)
+
+    // Color picker
+    colorPicker.addEventListener('input', function () {
+        currentColor = this.value;
+        if (currentTool === 'eraser') {
+            document.getElementById('brushTool').click();
+        }
+    });
+
+    // Brush size
+    brushSize.addEventListener('input', function () {
+        currentSize = parseInt(this.value);
+        brushSizeValue.textContent = currentSize;
+    });
+
+    // Get canvas coordinates
+    function getCanvasCoords(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+
+        let clientX, clientY;
+        if (e.touches) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+
+        return {
+            x: (clientX - rect.left) * scaleX,
+            y: (clientY - rect.top) * scaleY
+        };
+    }
+
+    // Drawing functions
+    function startDrawing(e) {
+        if (e.target.closest('.canvas-tools')) return;
+        e.preventDefault();
+        isDrawing = true;
+        const coords = getCanvasCoords(e);
+
+        currentStroke = {
+            tool: currentTool,
+            color: currentTool === 'eraser' ? '#ffffff' : currentColor,
+            size: currentSize,
+            points: [coords.x, coords.y]
+        };
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        e.preventDefault();
+
+        const coords = getCanvasCoords(e);
+        currentStroke.points.push(coords.x, coords.y);
+
+        // Draw on canvas
+        ctx.strokeStyle = currentStroke.color;
+        ctx.lineWidth = currentStroke.size;
+        ctx.beginPath();
+        const len = currentStroke.points.length;
+        ctx.moveTo(currentStroke.points[len - 4], currentStroke.points[len - 3]);
+        ctx.lineTo(currentStroke.points[len - 2], currentStroke.points[len - 1]);
+        ctx.stroke();
+    }
+
+    function stopDrawing(e) {
+        if (isDrawing && currentStroke) {
+            strokes.push(currentStroke);
+            undoStack.push(JSON.parse(JSON.stringify(strokes)));
+            redoStack = [];
+            currentStroke = null;
+        }
+        isDrawing = false;
+    }
+
+    // Canvas event listeners
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseleave', stopDrawing);
+
+    // Touch support
+    canvas.addEventListener('touchstart', startDrawing, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchend', stopDrawing, { passive: false });
+
+    // Undo/Redo
+    document.getElementById('undoBtn').addEventListener('click', function () {
+        if (undoStack.length > 1) {
+            redoStack.push(undoStack.pop());
+            strokes = JSON.parse(JSON.stringify(undoStack[undoStack.length - 1] || []));
+            redrawCanvas();
+        }
+    });
+
+    document.getElementById('redoBtn').addEventListener('click', function () {
+        if (redoStack.length > 0) {
+            const state = redoStack.pop();
+            undoStack.push(state);
+            strokes = JSON.parse(JSON.stringify(state));
+            redrawCanvas();
+        }
+    });
+
+    // Clear canvas
+    document.getElementById('clearBtn').addEventListener('click', function () {
+        if (confirm('Are you sure you want to clear the canvas?')) {
+            strokes = [];
+            undoStack.push([]);
+            redoStack = [];
+            redrawCanvas();
+        }
+    });
+
+    function redrawCanvas() {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        strokes.forEach(stroke => {
+            ctx.strokeStyle = stroke.color;
+            ctx.lineWidth = stroke.size;
+            ctx.beginPath();
+            for (let i = 0; i < stroke.points.length - 2; i += 2) {
+                ctx.moveTo(stroke.points[i], stroke.points[i + 1]);
+                ctx.lineTo(stroke.points[i + 2], stroke.points[i + 3]);
+            }
+            ctx.stroke();
+        });
+    }
+
+    // Save drawing
+    async function saveDrawing() {
+        try {
+            const payload = {
+                canvas_data: {
+                    strokes,
+                    width: canvas.width,
+                    height: canvas.height
+                },
+                width: canvas.width,
+                height: canvas.height,
+                title: '{{ drawing.title|default:"New Drawing"|escapejs }}'
+            };
+
+            const res = await fetch(SAVE_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': CSRF_TOKEN
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+
+            if (data.success || data.drawing_id) {
+                showSaveIndicator('Saved successfully!', 'success');
+
+                if (!IS_EDIT_MODE && data.drawing_id) {
+                    setTimeout(() => {
+                        window.location.href = `/drawing/canvas/${data.drawing_id}/`;
+                    }, 1000);
+                }
+            } else {
+                showSaveIndicator('Save failed', 'error');
+            }
+        } catch (err) {
+            console.error(err);
+            showSaveIndicator('Save error', 'error');
+        }
+    }
+
+    saveBtn.addEventListener('click', saveDrawing);
+
+    // Export drawing
+    exportBtn.addEventListener('click', () => {
+        const link = document.createElement('a');
+        link.download = '{{ drawing.title|default:"drawing"|escapejs }}.png';
+        link.href = canvas.toDataURL();
+        link.click();
+        showSaveIndicator('Exported successfully!', 'success');
+    });
+
+    function showSaveIndicator(message, type) {
+        saveMessage.textContent = message;
+        saveIndicator.className = 'save-indicator show ' + type;
+        setTimeout(() => {
+            saveIndicator.classList.remove('show');
+        }, 3000);
+    }
+
+    // Load existing drawing
+    if (IS_EDIT_MODE && LOAD_URL !== 'null') {
+        fetch(LOAD_URL)
+            .then(r => r.json())
+            .then(data => {
+                if (data.canvas_data && data.canvas_data.strokes) {
+                    strokes = data.canvas_data.strokes;
+                    undoStack = [JSON.parse(JSON.stringify(strokes))];
+                    redrawCanvas();
+                }
+            })
+            .catch(err => console.error('Load error:', err));
+    }
+
+    // Auto-save every 30 seconds
+    setInterval(() => {
+        if (strokes.length > 0 && IS_EDIT_MODE) {
+            saveDrawing();
+        }
+    }, 30000);
 </script>
-{% endblock %} 
+{% endblock %}

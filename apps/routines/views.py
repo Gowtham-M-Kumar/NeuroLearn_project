@@ -6,39 +6,35 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 from django.utils import timezone
-from datetime import datetime, timedelta
+from django.contrib.auth import get_user_model
 
-from .models import Routine, Task, TaskCompletion, RoutineSchedule
+from .models import Routine, Task, TaskCompletion, RoutineSchedule, TimetableEntry
 from .forms import (
-    RoutineForm, TaskForm, TaskCompletionForm, 
-    RoutineScheduleForm, TaskReorderForm
+    RoutineForm, TaskForm, RoutineScheduleForm, TaskReorderForm, TimetableEntryForm
 )
 
+User = get_user_model()
 
 @login_required
 def routine_list(request):
     """Display list of routines based on user role"""
     user = request.user
+    routines = []
+    
+    # Redirect teachers/therapists to their dedicated dashboard
+    if user.role in ['teacher', 'therapist']:
+        return redirect('routines:teacher_dashboard')
     
     if user.role == 'child':
-        # Children see their assigned routines
-        routines = Routine.objects.filter(
-            assigned_to=user,
-            is_active=True
-        )
+        # Child is redirected directly to their personalized timetable
+        if hasattr(user, 'routine') and user.routine.is_active:
+            return redirect('routines:routine_detail', routine_id=user.routine.id)
     elif user.role == 'parent':
-        # Parents see routines assigned to their children
+        # Parents see routines of their children
         children = user.parent_profile.children.all()
-        child_users = [child.user for child in children]
-        routines = Routine.objects.filter(
-            assigned_to__in=child_users,
-            is_active=True
-        ).distinct()
-    elif user.role in ['therapist', 'teacher']:
-        # Therapists/Teachers see routines they created
-        routines = Routine.objects.filter(created_by=user)
-    else:
-        routines = Routine.objects.none()
+        for child_profile in children:
+            if hasattr(child_profile.user, 'routine') and child_profile.user.routine.is_active:
+                routines.append(child_profile.user.routine)
     
     context = {
         'routines': routines,
@@ -48,76 +44,200 @@ def routine_list(request):
 
 
 @login_required
-def routine_detail(request, routine_id):
-    """Display routine details and tasks"""
-    routine = get_object_or_404(Routine, id=routine_id)
-    user = request.user
+def teacher_dashboard(request):
+    """Teacher dashboard for routine management"""
+    if request.user.role not in ['teacher', 'therapist']:
+        messages.error(request, "Access denied.")
+        return redirect('dashboard')
     
-    # Check permissions
-    if user.role == 'child' and user not in routine.assigned_to.all():
-        messages.error(request, "You don't have permission to view this routine.")
-        return redirect('routines:routine_list')
-    elif user.role == 'parent':
-        children = user.parent_profile.children.all()
-        child_user_ids = [child.user.id for child in children]
-        if not routine.assigned_to.filter(id__in=child_user_ids).exists():
-            messages.error(request, "You don't have permission to view this routine.")
-            return redirect('routines:routine_list')
-    elif user.role in ['therapist', 'teacher'] and routine.created_by != user:
-        messages.error(request, "You don't have permission to view this routine.")
-        return redirect('routines:routine_list')
-    
-    tasks = routine.tasks.all()
-    
-    # Get completion status for children
-    if user.role == 'child':
-        task_completions = TaskCompletion.objects.filter(
-            task__routine=routine,
-            child=user
-        ).values_list('task_id', flat=True)
-    elif user.role == 'parent':
-        children = user.parent_profile.children.all()
-        child_users = [child.user for child in children]
-        task_completions = TaskCompletion.objects.filter(
-            task__routine=routine,
-            child__in=child_users
-        ).values_list('task_id', 'child_id')
-    else:
-        task_completions = []
-    
+    # Fetch existing routines created by this teacher
+    recent_routines = Routine.objects.filter(created_by=request.user).order_by('-updated_at')[:10]
+        
     context = {
-        'routine': routine,
-        'tasks': tasks,
-        'task_completions': task_completions,
-        'user_role': user.role
+        'recent_routines': recent_routines
     }
-    return render(request, 'routines/routine_detail.html', context)
+    return render(request, 'routines/teacher_dashboard.html', context)
 
 
 @login_required
-def routine_create(request):
-    """Create a new routine"""
-    if request.user.role not in ['therapist', 'teacher']:
-        messages.error(request, "Only therapists and teachers can create routines.")
+def child_search(request):
+    """AJAX search for children"""
+    if request.user.role not in ['teacher', 'therapist']:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    query = request.GET.get('q', '')
+    if len(query) < 2:
+        return JsonResponse({'results': []})
+        
+    # Search by name or phone
+    children = User.objects.filter(
+        role='child'
+    ).filter(
+        Q(first_name__icontains=query) | 
+        Q(last_name__icontains=query) | 
+        Q(phone_number__icontains=query) |
+        Q(email__icontains=query)
+    )[:20]
+    
+    results = []
+    for child in children:
+        has_routine = hasattr(child, 'routine')
+        routine_id = child.routine.id if has_routine else None
+        
+        results.append({
+            'id': child.id,
+            'name': child.get_full_name(),
+            'phone': child.phone_number,
+            'has_routine': has_routine,
+            'routine_id': routine_id
+        })
+        
+    return JsonResponse({'results': results})
+
+
+@login_required
+def routine_detail(request, routine_id):
+    routine = get_object_or_404(Routine, id=routine_id)
+    user = request.user
+
+    # Permission checks
+    if user.role == 'child' and routine.child != user:
+        messages.error(request, "Access denied.")
         return redirect('routines:routine_list')
-    
-    if request.method == 'POST':
-        form = RoutineForm(request.POST, user=request.user)
-        if form.is_valid():
-            routine = form.save(commit=False)
-            routine.created_by = request.user
-            routine.save()
-            form.save_m2m()  # Save many-to-many relationships
-            messages.success(request, f"Routine '{routine.title}' created successfully!")
-            return redirect('routines:routine_detail', routine_id=routine.id)
-    else:
-        form = RoutineForm(user=request.user)
-    
-    context = {
-        'form': form,
-        'title': 'Create New Routine'
+
+    if user.role == 'parent':
+        if not user.parent_profile.children.filter(user=routine.child).exists():
+            messages.error(request, "Access denied.")
+            return redirect('routines:routine_list')
+
+    # Serialize timetable entries safely
+    timetable = {
+        'school': [],
+        'leave': [],
     }
-    return render(request, 'routines/routine_form.html', context)
+
+    entries = (
+        TimetableEntry.objects
+        .filter(routine=routine)
+        .order_by('time')
+    )
+
+    for e in entries:
+        timetable[e.day_type].append({
+            'id': e.id,
+            'time': e.time.strftime('%I:%M %p'),
+            'task_type': e.task_type,
+            'task_type_display': e.get_task_type_display(),
+            'custom_description': e.custom_description or '',
+            'notes': e.notes or '',
+        })
+
+    entry_form = TimetableEntryForm() if user.role in ['teacher', 'therapist'] else None
+
+    return render(request, 'routines/routine_detail.html', {
+        'routine': routine,
+        'timetable': timetable,   # ✅ PURE DATA
+        'entry_form': entry_form,
+        'day_types': [('school', 'School Days'), ('leave', 'Leave Days')],
+        'user_role': user.role,
+    })
+
+@login_required
+@require_POST
+def timetable_entry_add(request, routine_id):
+    routine = get_object_or_404(Routine, id=routine_id)
+
+    if request.user.role not in ['teacher', 'therapist']:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    form = TimetableEntryForm(request.POST)
+
+    if not form.is_valid():
+        return JsonResponse({'errors': form.errors}, status=400)
+
+    entry = form.save(commit=False)
+    entry.routine = routine
+    
+    # Explicitly pull the calculated time from form.cleaned_data
+    calculated_time = form.cleaned_data.get('time')
+    entry.time = calculated_time
+
+    # Prevent duplicate time per day type
+    exists = TimetableEntry.objects.filter(
+        routine=routine,
+        day_type=entry.day_type,
+        time=calculated_time
+    ).exists()
+
+    if exists:
+        return JsonResponse({
+            'error': 'An entry already exists for this time.'
+        }, status=400)
+
+    entry.save()
+    return JsonResponse({'success': True})
+
+@login_required
+@require_POST
+def timetable_entry_edit(request, entry_id):
+    """AJAX view to edit a timetable entry"""
+    entry = get_object_or_404(TimetableEntry, id=entry_id)
+    if request.user.role not in ['teacher', 'therapist']:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+        
+    form = TimetableEntryForm(request.POST, instance=entry)
+    if not form.is_valid():
+        return JsonResponse({'errors': form.errors}, status=400)
+        
+    # Prevent duplicate time per day type (excluding self)
+    exists = TimetableEntry.objects.filter(
+        routine=entry.routine,
+        day_type=form.cleaned_data.get('day_type'),
+        time=form.cleaned_data.get('time')
+    ).exclude(id=entry.id).exists()
+    
+    if exists:
+        return JsonResponse({'error': 'An entry already exists for this time.'}, status=400)
+        
+    form.save()
+    return JsonResponse({'success': True})
+
+
+@login_required
+@require_POST
+def timetable_entry_delete(request, entry_id):
+    """AJAX view to delete a timetable entry"""
+    entry = get_object_or_404(TimetableEntry, id=entry_id)
+    if request.user.role not in ['teacher', 'therapist']:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+        
+    entry.delete()
+    return JsonResponse({'success': True})
+
+
+@login_required
+def routine_create(request, child_id):
+    """Bypasses the intermediate form and auto-creates a routine profile for the child."""
+    if request.user.role not in ['therapist', 'teacher']:
+        messages.error(request, "Permission denied.")
+        return redirect('routines:routine_list')
+        
+    child = get_object_or_404(User, id=child_id, role='child')
+    
+    # If routine already exists, jump straight to the timetable management
+    if hasattr(child, 'routine'):
+        return redirect('routines:routine_detail', routine_id=child.routine.id)
+        
+    # Standardize the routine creation
+    routine = Routine.objects.create(
+        title=f"Routine for {child.get_full_name()}",
+        description=f"Personalized clinical timetable for {child.get_full_name()}",
+        created_by=request.user,
+        child=child
+    )
+    
+    messages.success(request, f"Routine setup started for {child.get_full_name()}. You can now build the timetable below.")
+    return redirect('routines:routine_detail', routine_id=routine.id)
 
 
 @login_required
@@ -125,23 +245,24 @@ def routine_edit(request, routine_id):
     """Edit an existing routine"""
     routine = get_object_or_404(Routine, id=routine_id)
     
-    if request.user.role not in ['therapist', 'teacher'] or routine.created_by != request.user:
-        messages.error(request, "You don't have permission to edit this routine.")
+    # Teachers can edit any routine as per requirements "A teacher can edit any child's routine at any time"
+    if request.user.role not in ['therapist', 'teacher']:
+        messages.error(request, "Permission denied.")
         return redirect('routines:routine_detail', routine_id=routine.id)
     
     if request.method == 'POST':
-        form = RoutineForm(request.POST, instance=routine, user=request.user)
+        form = RoutineForm(request.POST, instance=routine)
         if form.is_valid():
             form.save()
-            messages.success(request, f"Routine '{routine.title}' updated successfully!")
+            messages.success(request, "Routine updated successfully!")
             return redirect('routines:routine_detail', routine_id=routine.id)
     else:
-        form = RoutineForm(instance=routine, user=request.user)
+        form = RoutineForm(instance=routine)
     
     context = {
         'form': form,
         'routine': routine,
-        'title': f'Edit Routine: {routine.title}'
+        'title': f'Edit Routine: {routine.title} ({routine.child.get_full_name()})'
     }
     return render(request, 'routines/routine_form.html', context)
 
@@ -151,8 +272,8 @@ def task_create(request, routine_id):
     """Add a new task to a routine"""
     routine = get_object_or_404(Routine, id=routine_id)
     
-    if request.user.role not in ['therapist', 'teacher'] or routine.created_by != request.user:
-        messages.error(request, "You don't have permission to add tasks to this routine.")
+    if request.user.role not in ['therapist', 'teacher']:
+        messages.error(request, "Permission denied.")
         return redirect('routines:routine_detail', routine_id=routine.id)
     
     if request.method == 'POST':
@@ -160,8 +281,11 @@ def task_create(request, routine_id):
         if form.is_valid():
             task = form.save(commit=False)
             task.routine = routine
+            # Set order to last
+            last_order = routine.tasks.order_by('-order').first()
+            task.order = (last_order.order + 1) if last_order else 1
             task.save()
-            messages.success(request, f"Task '{task.title}' added successfully!")
+            messages.success(request, "Task added!")
             return redirect('routines:routine_detail', routine_id=routine.id)
     else:
         form = TaskForm()
@@ -179,15 +303,15 @@ def task_edit(request, task_id):
     """Edit an existing task"""
     task = get_object_or_404(Task, id=task_id)
     
-    if request.user.role not in ['therapist', 'teacher'] or task.routine.created_by != request.user:
-        messages.error(request, "You don't have permission to edit this task.")
+    if request.user.role not in ['therapist', 'teacher']:
+        messages.error(request, "Permission denied.")
         return redirect('routines:routine_detail', routine_id=task.routine.id)
     
     if request.method == 'POST':
         form = TaskForm(request.POST, request.FILES, instance=task)
         if form.is_valid():
             form.save()
-            messages.success(request, f"Task '{task.title}' updated successfully!")
+            messages.success(request, "Task updated!")
             return redirect('routines:routine_detail', routine_id=task.routine.id)
     else:
         form = TaskForm(instance=task)
@@ -200,6 +324,20 @@ def task_edit(request, task_id):
     }
     return render(request, 'routines/task_form.html', context)
 
+@login_required
+@require_POST
+def task_delete(request, task_id):
+    """Delete a task"""
+    task = get_object_or_404(Task, id=task_id)
+    if request.user.role not in ['teacher', 'therapist']:
+         messages.error(request, "Permission denied.")
+         return redirect('routines:routine_detail', routine_id=task.routine.id)
+    
+    routine_id = task.routine.id
+    task.delete()
+    messages.success(request, "Task deleted.")
+    return redirect('routines:routine_detail', routine_id=routine_id)
+
 
 @login_required
 @require_POST
@@ -208,54 +346,25 @@ def task_complete(request, task_id):
     task = get_object_or_404(Task, id=task_id)
     user = request.user
     
-    # Check if user can complete this task
-    if user.role == 'child':
-        if user not in task.routine.assigned_to.all():
-            messages.error(request, "You don't have permission to complete this task.")
-            return redirect('routines:routine_detail', routine_id=task.routine.id)
-    elif user.role == 'parent':
-        children = user.parent_profile.children.all()
-        child_user_ids = [child.user.id for child in children]
-        if not task.routine.assigned_to.filter(id__in=child_user_ids).exists():
-            messages.error(request, "You don't have permission to complete this task.")
-            return redirect('routines:routine_detail', routine_id=task.routine.id)
-    else:
-        messages.error(request, "Only children and parents can complete tasks.")
-        return redirect('routines:routine_detail', routine_id=task.routine.id)
-    
-    # Determine which child completed the task
+    # Identify the child
+    child = None
     if user.role == 'child':
         child = user
-    else:
-        # Parent completing for a child - need to specify which child
-        child_id = request.POST.get('child_id')
-        if not child_id:
-            messages.error(request, "Please specify which child completed the task.")
-            return redirect('routines:routine_detail', routine_id=task.routine.id)
-        child_profile = get_object_or_404(user.parent_profile.children.all(), id=child_id)
-        child = child_profile.user
-    
-    # Check if already completed today
+    elif user.role == 'parent':
+        if task.routine.child in [c.user for c in user.parent_profile.children.all()]:
+            child = task.routine.child
+            
+    if not child or child != task.routine.child:
+         messages.error(request, "Permission denied.")
+         return redirect('routines:routine_detail', routine_id=task.routine.id)
+
+    # Check already completed today
     today = timezone.now().date()
-    existing_completion = TaskCompletion.objects.filter(
-        task=task,
-        child=child,
-        completed_at__date=today
-    ).first()
-    
-    if existing_completion:
-        messages.warning(request, "This task was already completed today.")
-        return redirect('routines:routine_detail', routine_id=task.routine.id)
-    
-    # Create completion record
-    completion = TaskCompletion.objects.create(
-        task=task,
-        child=child,
-        completed_by=user
-    )
-    
-    messages.success(request, f"Task '{task.title}' marked as completed!")
-    return redirect('routines:routine_detail', routine_id=task.routine.id)
+    if TaskCompletion.objects.filter(task=task, child=child, completed_at__date=today).exists():
+        return JsonResponse({'status': 'already_completed'})
+        
+    TaskCompletion.objects.create(task=task, child=child, completed_by=user)
+    return JsonResponse({'status': 'success'})
 
 
 @login_required
@@ -266,21 +375,15 @@ def task_reorder(request):
     if request.user.role not in ['therapist', 'teacher']:
         return JsonResponse({'error': 'Permission denied'}, status=403)
     
-    form = TaskReorderForm(request.POST)
-    if form.is_valid():
-        task = form.cleaned_data['task']
-        new_order = form.cleaned_data['new_order']
-        
-        if task.routine.created_by != request.user:
-            return JsonResponse({'error': 'Permission denied'}, status=403)
-        
-        # Update task order
+    try:
+        task_id = request.POST.get('task_id')
+        new_order = int(request.POST.get('new_order'))
+        task = Task.objects.get(id=task_id)
         task.order = new_order
         task.save()
-        
         return JsonResponse({'success': True})
-    
-    return JsonResponse({'error': 'Invalid data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
 
 
 @login_required
@@ -322,13 +425,13 @@ def routine_progress(request, routine_id):
     user = request.user
     
     # Check permissions
-    if user.role == 'child' and user not in routine.assigned_to.all():
+    if user.role == 'child' and routine.child != user:
         messages.error(request, "You don't have permission to view this routine.")
         return redirect('routines:routine_list')
     elif user.role == 'parent':
-        children = user.parent_profile.children.all()
-        child_user_ids = [child.user.id for child in children]
-        if not routine.assigned_to.filter(id__in=child_user_ids).exists():
+        # Check if routine belongs to one of parent's children
+        is_parent_of_child = user.parent_profile.children.filter(user=routine.child).exists()
+        if not is_parent_of_child:
             messages.error(request, "You don't have permission to view this routine.")
             return redirect('routines:routine_list')
     elif user.role in ['therapist', 'teacher'] and routine.created_by != user:
@@ -342,12 +445,13 @@ def routine_progress(request, routine_id):
         children_profiles = user.parent_profile.children.all()
         children = [child_profile.user for child_profile in children_profiles]
     else:
-        children = routine.assigned_to.all()
+        # Since routine is 1-to-1 with child now, there is only one child
+        children = [routine.child]
     
     # Get completion statistics
     completion_stats = []
     for child in children:
-        if child in routine.assigned_to.all():
+        if child == routine.child:
             total_tasks = routine.tasks.count()
             completed_tasks = TaskCompletion.objects.filter(
                 task__routine=routine,
@@ -367,3 +471,4 @@ def routine_progress(request, routine_id):
         'user_role': user.role
     }
     return render(request, 'routines/routine_progress.html', context)
+

@@ -1,0 +1,440 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{%block page_title%}Class Analytics Insights{% endblock %}
+{%block page_subtitle%}Aggregate performance trends and engagement patterns across all students.{% endblock %}
+
+{% block extra_head %}
+<style>
+    .analytics-dashboard {
+        display: flex;
+        flex-direction: column;
+        gap: 2.5rem;
+        padding-bottom: 3rem;
+    }
+
+    /* KPI Summary Cards */
+    .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .kpi-stat-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 24px;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        transition: transform 0.3s ease;
+    }
+
+    .kpi-stat-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--accent-primary);
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        letter-spacing: -1px;
+    }
+
+    /* Analytics Sections */
+    .analytics-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2.5rem;
+    }
+
+    @media (max-width: 1024px) {
+        .analytics-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .analysis-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 24px;
+        padding: 2.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .analysis-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .analysis-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    /* Data Tables/Lists */
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .data-table th {
+        text-align: left;
+        padding: 1rem;
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .data-table td {
+        padding: 1.25rem 1rem;
+        border-bottom: 1px solid var(--border-subtle);
+        font-size: 0.95rem;
+    }
+
+    .data-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .trend-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+
+    .trend-up {
+        color: #10b981;
+    }
+
+    .trend-down {
+        color: #ef4444;
+    }
+
+    /* Risk indicators */
+    .risk-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .risk-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem;
+        background: rgba(239, 68, 68, 0.03);
+        border: 1px solid rgba(239, 68, 68, 0.1);
+        border-radius: 16px;
+    }
+
+    .student-pill {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .avatar-xs {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        background: var(--bg-main);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="analytics-dashboard">
+
+    <!-- OVERVIEW KPI ROW -->
+    <div class="kpi-row">
+        <div class="kpi-stat-card">
+            <span class="stat-label">Class Size</span>
+            <span class="stat-value">{{ overview.total_students }}</span>
+            <span class="text-secondary small">Registered Students</span>
+        </div>
+        <div class="kpi-stat-card">
+            <span class="stat-label">Avg. Completion</span>
+            <span class="stat-value">{{ overview.avg_learning_completion }}%</span>
+            <div class="trend-indicator trend-up">
+                <span class="material-icons" style="font-size: 16px;">trending_up</span>
+                <span>Learning Modules</span>
+            </div>
+        </div>
+        <div class="kpi-stat-card">
+            <span class="stat-label">Success Rate</span>
+            <span class="stat-value">{{ overview.avg_game_accuracy }}%</span>
+            <div class="trend-indicator trend-up">
+                <span class="material-icons" style="font-size: 16px;">trending_up</span>
+                <span>Game Performance</span>
+            </div>
+        </div>
+        <div class="kpi-stat-card">
+            <span class="stat-label">Creative Output</span>
+            <span class="stat-value">{{ overview.total_drawings }}</span>
+            <span class="text-secondary small">Drawings Submitted</span>
+        </div>
+
+    </div>
+
+
+    <div class="analytics-grid">
+        <!-- CREATIVE ENGAGEMENT -->
+        <section class="analysis-card">
+            <div class="analysis-header">
+                <span class="material-icons" style="color: #ec4899;">palette</span>
+                <h3 class="analysis-title">Creative Engagement</h3>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <h4 class="stat-label">Top Creators this Month</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem;">
+                    {% for creator in top_creators %}
+                    <div
+                        style="background: var(--bg-main); border: 1px solid var(--border-subtle); padding: 1.25rem; border-radius: 16px; text-align: center;">
+                        {% if creator.child__profile_picture %}
+                        <img src="/media/{{ creator.child__profile_picture }}" class="avatar-sm"
+                            style="margin: 0 auto 0.75rem; object-fit: cover; display: block;">
+                        {% else %}
+                        <div class="avatar-sm"
+                            style="margin: 0 auto 0.75rem; background: linear-gradient(135deg, #ec4899, #f43f5e); color: white;">
+                            {{ creator.child__first_name|first }}
+                        </div>
+                        {% endif %}
+                        <div style="font-weight: 700; font-size: 0.9rem;">{{ creator.child__first_name }}</div>
+                        <div class="text-secondary small">{{ creator.count }} Submissions</div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">Waiting for creative submissions.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <!-- ENGAGEMENT & RISK INDICATORS -->
+        <section class="analysis-card">
+            <div class="analysis-header">
+                <span class="material-icons" style="color: #ef4444;">warning_amber</span>
+                <h3 class="analysis-title">Students Needing Attention</h3>
+            </div>
+            <div class="risk-list">
+                {% for student in at_risk %}
+                <div class="risk-item">
+                    <div class="student-pill">
+                        {% if student.user.profile_picture %}
+                        <img src="{{ student.user.profile_picture.url }}" class="avatar-xs" style="object-fit: cover;">
+                        {% else %}
+                        <div class="avatar-xs">{{ student.user.first_name|first|upper }}</div>
+                        {% endif %}
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.9rem;">{{ student.user.get_full_name }}</div>
+                            <div class="text-secondary" style="font-size: 0.7rem;">ID: #{{ student.user.id|stringformat:"05d" }}</div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.75rem; font-weight: 700; color: #ef4444;">
+                            Inactive for 7+ days
+                        </div>
+                        <a href="{%url 'users:user_detail' student.user.id%}" class="small text-secondary"
+                            style="text-decoration: none;">View Detail</a>
+                    </div>
+                </div>
+                {% empty %}
+                <div
+                    style="text-align: center; padding: 2rem; border: 2px dashed var(--border-subtle); border-radius: 16px;">
+                    <span class="material-icons"
+                        style="color: #10b981; font-size: 3rem; margin-bottom: 1rem;">verified_user</span>
+                    <p class="text-secondary">All students are performing within expected ranges.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    <div class="analytics-grid">
+        <!-- LEARNING ANALYSIS -->
+        <section class="analysis-card">
+            <div class="analysis-header">
+                <span class="material-icons" style="color: #8b5cf6;">auto_stories</span>
+                <h3 class="analysis-title">Learning Module Patterns</h3>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+                <div>
+                    <h4 class="stat-label" style="margin-bottom: 1rem;">Most Attempted Tracing</h4>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Element</th>
+                                <th>Total Count</th>
+                                <th>Engagement</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in learning.most_attempted %}
+                            <tr>
+                                <td style="font-weight: 700;">{{ item.letter__char }}</td>
+                                <td>{{ item.count }}</td>
+                                <td>
+                                    <div class="progress-minimal" style="width: 100px;">
+                                        <div class="progress-bar-minimal" style="width: 85%; background: #8b5cf6;">
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-muted text-center">No learning data yet</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div>
+                    <h4 class="stat-label" style="margin-bottom: 1rem; color: #ec4899;">Top Emotions Learned</h4>
+                    <div style="display: flex; flex-wrap: wrap; gap: 1rem;">
+                        {% for item in learning.top_emotions %}
+                        <div
+                            style="background: rgba(236, 72, 153, 0.05); border: 1px solid rgba(236, 72, 153, 0.1); padding: 0.5rem 1rem; border-radius: 12px; display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-weight: 700; font-size: 0.95rem; color: #ec4899;">{{ item.emotion__name }}</span>
+                            <span class="text-secondary" style="font-size: 0.8rem;">{{ item.count }}</span>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted small">No emotion learning data yet.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="stat-label" style="margin-bottom: 1rem; color: #ef4444;">Difficult Concepts</h4>
+                    <div style="display: flex; flex-wrap: wrap; gap: 1rem;">
+                        {% for item in learning.difficult %}
+                        <div
+                            style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.1); padding: 1rem 1.5rem; border-radius: 12px; display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-weight: 800; font-size: 1.25rem; color: #ef4444;">{{ item.letter__char }}</span>
+                            <span class="text-secondary small">Attempts: {{ item.count }}</span>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">No difficult patterns identified yet.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- GAME PERFORMANCE ANALYSIS -->
+        <section class="analysis-card">
+            <div class="analysis-header">
+                <span class="material-icons" style="color: #f59e0b;">insights</span>
+                <h3 class="analysis-title">Game Performance Trends</h3>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Activity Name</th>
+                        <th>Avg Accuracy</th>
+                        <th>Max Level</th>
+                        <th>Popularity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for game in game_stats %}
+                    <tr>
+                        <td style="font-weight: 700;">{{ game.game__name }}</td>
+                        <td>{{ game.avg_acc|floatformat:1 }}%</td>
+                        <td>Level {{ game.max_lvl }}</td>
+                        <td>
+                            <span class="status-badge badge-success">{{ game.total_sess }} Plays</span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-muted text-center">No game activity recorded</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </div>
+
+
+
+    <!-- FULL CLASS ROSTER SECTION -->
+    <section class="analysis-card">
+        <div class="analysis-header">
+            <span class="material-icons" style="color: var(--accent-primary);">groups</span>
+            <h3 class="analysis-title">Class Performance Roster</h3>
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Age</th>
+                    <th>Learning Level</th>
+                    <th>Last Activity</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for child in assigned_children %}
+                <tr>
+                    <td>
+                        <div class="student-pill">
+                            {% if child.user.profile_picture %}
+                            <img src="{{ child.user.profile_picture.url }}" class="avatar-xs"
+                                style="object-fit: cover;">
+                            {% else %}
+                            <div class="avatar-xs">{{ child.user.first_name|first|upper }}</div>
+                            {% endif %}
+                            <div style="font-weight: 700;">{{ child.user.get_full_name }}</div>
+                        </div>
+                    </td>
+                    <td>{{ child.age }}</td>
+                    <td>
+                        <span class="status-badge"
+                            style="background: rgba(99, 102, 241, 0.1); color: var(--accent-primary);">
+                            {{ child.learning_level|title }}
+                        </span>
+                    </td>
+                    <td class="text-secondary small">{{ child.user.last_login|timesince }} ago</td>
+                    <td>
+                        <a href="{%url 'users:user_detail' child.user.id%}" class="view-details-link"
+                            style="padding: 0.4rem 0.8rem; font-size: 0.75rem;">
+                            View Detailed Analytics
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-muted text-center" style="padding: 3rem;">
+                        No students profiles found. Go to Student Discovery to add students to your class.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+</div>
+{%endblock%}

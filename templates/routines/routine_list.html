@@ -1,32 +1,215 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Routines - NEURO Learn{% endblock %}
+{% block page_header_icon %}
+{% endblock %}
+
+{% block page_title %}Routines{% endblock %}
+{% block page_subtitle %}Stay on track with your daily routines!{% endblock %}
+
+{% block extra_head %}
+<style>
+    .routines-dashboard-section {
+        background: linear-gradient(135deg, rgba(6, 182, 212, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%);
+        border-radius: 24px;
+        border: 1px solid var(--border-subtle);
+        padding: 2.5rem 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .routines-section-header {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        margin-bottom: 3rem;
+    }
+
+    .routines-section-header .material-icons {
+        font-size: 2.5rem;
+        color: var(--accent-primary);
+    }
+
+    .routines-section-header h3 {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
+
+    .routines-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 2.5rem;
+    }
+
+    .routine-card {
+        display: flex;
+        flex-direction: column;
+        padding: 2.5rem 2rem;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 24px;
+        text-decoration: none;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .routine-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, var(--accent-primary-light), transparent);
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        z-index: 0;
+    }
+
+    .routine-card:hover {
+        transform: translateY(-12px);
+        border-color: var(--accent-primary);
+        box-shadow: 0 24px 48px rgba(99, 102, 241, 0.2);
+    }
+
+    .routine-card:hover::before {
+        opacity: 1;
+    }
+
+    .routine-card>* {
+        position: relative;
+        z-index: 1;
+    }
+
+
+
+    .routine-title {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        letter-spacing: -0.3px;
+    }
+
+    .routine-description {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+        flex-grow: 1;
+    }
+
+    .routine-cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--accent-primary);
+        font-weight: 700;
+        font-size: 1rem;
+        transition: gap 0.3s ease;
+        width: 100%;
+        padding: 0.85rem 1rem;
+        border-radius: 12px;
+        background: var(--accent-primary-light);
+        justify-content: center;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+    }
+
+    .routine-card:hover .routine-cta {
+        gap: 0.75rem;
+    }
+
+    .routine-card.empty-state {
+        grid-column: 1 / -1;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), transparent);
+        border: 2px dashed var(--border-subtle);
+        text-align: center;
+        padding: 4rem 2rem;
+        transform: none;
+    }
+
+    .routine-card.empty-state:hover {
+        transform: none;
+        box-shadow: var(--card-shadow);
+        border-color: var(--border-subtle);
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        color: var(--border-subtle);
+        margin-bottom: 1.5rem;
+        display: block;
+    }
+
+    .empty-state-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state-desc {
+        color: var(--text-secondary);
+        font-size: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .routines-dashboard-section {
+            padding: 2rem 1.5rem;
+        }
+
+        .routines-grid {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        .routine-card {
+            padding: 2rem;
+        }
+
+        .routines-section-header h3 {
+            font-size: 1.25rem;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="duo-dashboard-container mx-auto py-5">
-    <div class="duo-card welcome-card text-center shadow-sm mb-4">
-        <h2 class="duo-title mb-2">
-            <span class="me-2" style="font-size:2.5rem;">📅</span>Routines
-        </h2>
-        <p class="duo-lead">Stay on track with your daily routines!</p>
-    </div>
-    <div class="duo-card shadow-sm p-4">
-        <h3 class="duo-section-title mb-4 text-center">Your Routines</h3>
-        <div class="duo-dashboard-grid">
+<div class="container-custom">
+    <section class="routines-dashboard-section">
+        <div class="routines-section-header">
+            <span class="material-icons">calendar_view_day</span>
+            <h3>Your Personalized Routines</h3>
+        </div>
+
+        {% if routines %}
+        <div class="routines-grid">
             {% for routine in routines %}
-            <div class="duo-module-card duo-green text-center d-flex flex-column align-items-center justify-content-center">
-                <span class="duo-icon mb-2">⏰</span>
-                <span class="duo-module-title">{{ routine.title }}</span>
-                <div class="mt-2 text-white-50 small">{{ routine.description|default:"No description" }}</div>
-                <div class="mt-2">
-                    <a href="{{ routine.get_absolute_url }}" class="btn btn-light btn-sm mt-2">View</a>
-                </div>
-            </div>
-            {% empty %}
-            <div class="text-center w-100 text-muted">No routines available yet.</div>
+            <a href="{% url 'routines:routine_detail' routine.id %}" class="routine-card">
+
+                <h4 class="routine-title">{{ routine.title }}</h4>
+                <p class="routine-description">
+                    {{ routine.description|default:"A personalized schedule of daily learning activities and therapy goals tailored for your progress." }}
+                </p>
+                <span class="routine-cta">
+                    View Details
+                    <span class="material-icons" style="font-size: 1.2rem;">arrow_forward</span>
+                </span>
+            </a>
             {% endfor %}
         </div>
-    </div>
+        {% else %}
+        <div class="routines-grid">
+            <div class="routine-card empty-state">
+                <span class="material-icons empty-state-icon">event_busy</span>
+                <h4 class="empty-state-title">No Active Routines</h4>
+                <p class="empty-state-desc">Once a teacher assigns a routine to you, it will appear here.</p>
+            </div>
+        </div>
+        {% endif %}
+    </section>
 </div>
-{% endblock %} 
+{% endblock %}

@@ -1,0 +1,374 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{%block page_title%}Activity Notifications{% endblock %}
+{%block page_subtitle%}Real-time alerts for all student activities — learning, games, drawing, routines & more.{% endblock %}
+
+{% block extra_head %}
+<style>
+    .notifications-wrapper {
+        max-width: 900px;
+        margin: 0 auto;
+        padding-bottom: 3rem;
+    }
+
+    /* Filter Tabs */
+    .filter-tabs {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+        padding: 0.5rem;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 20px;
+    }
+
+    .filter-tab {
+        padding: 0.5rem 1.1rem;
+        border-radius: 14px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        color: var(--text-secondary);
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .filter-tab:hover {
+        background: rgba(99, 102, 241, 0.08);
+        color: var(--text-primary);
+    }
+
+    .filter-tab.active {
+        background: var(--accent-primary);
+        color: #fff;
+    }
+
+    .filter-tab .tab-count {
+        background: rgba(255, 255, 255, 0.25);
+        border-radius: 99px;
+        padding: 0.1rem 0.45rem;
+        font-size: 0.7rem;
+        font-weight: 800;
+    }
+
+    .filter-tab:not(.active) .tab-count {
+        background: rgba(99, 102, 241, 0.12);
+        color: var(--accent-primary);
+    }
+
+    /* Notification Items */
+    .notifications-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+
+    .notification-item {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 20px;
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1.1rem;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .notification-item:hover {
+        transform: translateX(6px);
+        border-color: var(--accent-primary);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+    }
+
+    .notification-icon-wrapper {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    /* Type colors */
+    .type-success {
+        background: rgba(16, 185, 129, 0.12);
+        color: #10b981;
+    }
+
+    .type-info {
+        background: rgba(59, 130, 246, 0.12);
+        color: #3b82f6;
+    }
+
+    .type-primary {
+        background: rgba(139, 92, 246, 0.12);
+        color: #8b5cf6;
+    }
+
+    .type-warning {
+        background: rgba(245, 158, 11, 0.12);
+        color: #f59e0b;
+    }
+
+    .type-danger {
+        background: rgba(239, 68, 68, 0.12);
+        color: #ef4444;
+    }
+
+    .type-emotion {
+        background: rgba(236, 72, 153, 0.12);
+        color: #ec4899;
+    }
+
+    .type-routine {
+        background: rgba(6, 182, 212, 0.12);
+        color: #06b6d4;
+    }
+
+    .notification-body {
+        flex-grow: 1;
+        min-width: 0;
+    }
+
+    .notification-message {
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.2rem;
+        font-size: 0.95rem;
+        line-height: 1.4;
+    }
+
+    .notification-meta {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .notif-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.15rem 0.6rem;
+        border-radius: 99px;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        flex-shrink: 0;
+    }
+
+    .badge-game {
+        background: rgba(245, 158, 11, 0.14);
+        color: #f59e0b;
+    }
+
+    .badge-drawing {
+        background: rgba(16, 185, 129, 0.14);
+        color: #10b981;
+    }
+
+    .badge-learning {
+        background: rgba(139, 92, 246, 0.14);
+        color: #8b5cf6;
+    }
+
+    .badge-emotion {
+        background: rgba(236, 72, 153, 0.14);
+        color: #ec4899;
+    }
+
+    .badge-routine {
+        background: rgba(6, 182, 212, 0.14);
+        color: #06b6d4;
+    }
+
+    .badge-alert {
+        background: rgba(245, 158, 11, 0.14);
+        color: #f59e0b;
+    }
+
+    .badge-other {
+        background: rgba(99, 102, 241, 0.14);
+        color: #6366f1;
+    }
+
+    .notification-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent-primary);
+        position: absolute;
+        top: 1.25rem;
+        right: 1.25rem;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        50% {
+            opacity: 0.5;
+            transform: scale(0.8);
+        }
+    }
+
+    .empty-notifications {
+        text-align: center;
+        padding: 6rem 2rem;
+        border: 2px dashed var(--border-subtle);
+        border-radius: 30px;
+        color: var(--text-secondary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="notifications-wrapper">
+
+    <!-- Summary Banner -->
+    <div
+        style="background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(6,182,212,0.1)); border: 1px solid var(--border-subtle); border-radius: 20px; padding: 1.5rem 2rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 1.5rem;">
+        <span class="material-icons"
+            style="font-size: 2.5rem; color: var(--accent-primary);">notifications_active</span>
+        <div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary);">{{ total_notifications }}
+                Activity Events</div>
+            <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">Across all modules:
+                Learning, Games, Drawing, Emotions & Routines</div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs" role="tablist">
+        <button class="filter-tab active" data-filter="all" onclick="filterNotifs('all', this)">
+            <span class="material-icons" style="font-size: 1rem;">all_inclusive</span>
+            All
+            <span class="tab-count">{{ total_notifications }}</span>
+        </button>
+        {% if category_counts.game %}
+        <button class="filter-tab" data-filter="game" onclick="filterNotifs('game', this)">
+            <span class="material-icons" style="font-size: 1rem;">sports_esports</span>
+            Games
+            <span class="tab-count">{{ category_counts.game }}</span>
+        </button>
+        {% endif %}
+        {% if category_counts.learning %}
+        <button class="filter-tab" data-filter="learning" onclick="filterNotifs('learning', this)">
+            <span class="material-icons" style="font-size: 1rem;">menu_book</span>
+            Learning
+            <span class="tab-count">{{ category_counts.learning }}</span>
+        </button>
+        {% endif %}
+        {% if category_counts.emotion %}
+        <button class="filter-tab" data-filter="emotion" onclick="filterNotifs('emotion', this)">
+            <span class="material-icons" style="font-size: 1rem;">mood</span>
+            Emotions
+            <span class="tab-count">{{ category_counts.emotion }}</span>
+        </button>
+        {% endif %}
+        {% if category_counts.drawing %}
+        <button class="filter-tab" data-filter="drawing" onclick="filterNotifs('drawing', this)">
+            <span class="material-icons" style="font-size: 1rem;">palette</span>
+            Drawing
+            <span class="tab-count">{{ category_counts.drawing }}</span>
+        </button>
+        {% endif %}
+        {% if category_counts.routine %}
+        <button class="filter-tab" data-filter="routine" onclick="filterNotifs('routine', this)">
+            <span class="material-icons" style="font-size: 1rem;">task_alt</span>
+            Routine
+            <span class="tab-count">{{ category_counts.routine }}</span>
+        </button>
+        {% endif %}
+        {% if category_counts.alert %}
+        <button class="filter-tab" data-filter="alert" onclick="filterNotifs('alert', this)">
+            <span class="material-icons" style="font-size: 1rem;">person_off</span>
+            Alerts
+            <span class="tab-count">{{ category_counts.alert }}</span>
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- Notifications List -->
+    <div class="notifications-container" id="notif-list">
+        {% if notifications %}
+        {% for note in notifications %}
+        <div class="notification-item" data-category="{{ note.category }}">
+            <div
+                class="notification-icon-wrapper type-{{ note.type }}{%if note.category == 'emotion'%} type-emotion{%elif note.category == 'routine'%} type-routine{%endif%}">
+                <span class="material-icons">{{ note.icon }}</span>
+            </div>
+            <div class="notification-body">
+                <div class="notification-message">{{ note.message }}</div>
+                <div class="notification-meta">
+                    <span class="material-icons" style="font-size: 13px;">schedule</span>
+                    {{ note.timestamp|timesince }} ago
+                    <span class="notif-badge badge-{{ note.category }}">{{ note.badge }}</span>
+                </div>
+            </div>
+            {%if forloop.counter <= 5%} <div class="notification-dot" title="Recent">
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-notifications">
+        <span class="material-icons"
+            style="font-size: 4rem; opacity: 0.2; margin-bottom: 1.5rem; display: block;">notifications_none</span>
+        <h3>All Quiet Today</h3>
+        <p>No student activity has been recorded recently.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Empty state for filtered view -->
+<div id="notif-empty-filter" style="display: none;" class="empty-notifications">
+    <span class="material-icons"
+        style="font-size: 4rem; opacity: 0.2; margin-bottom: 1.5rem; display: block;">filter_list_off</span>
+    <h3>No activity in this category yet.</h3>
+    <p>Try selecting a different filter above.</p>
+</div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function filterNotifs(category, btn) {
+        // Update active tab
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+
+        const items = document.querySelectorAll('#notif-list .notification-item');
+        let visible = 0;
+
+        items.forEach(item => {
+            if (category === 'all' || item.dataset.category === category) {
+                item.style.display = '';
+                visible++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        // Show/hide empty message
+        document.getElementById('notif-empty-filter').style.display = (visible === 0) ? '' : 'none';
+    }
+</script>
+{%endblock%}

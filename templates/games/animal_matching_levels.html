@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Animal Matching Levels - NeuroLearn{% endblock %}
+
+{% block page_header_icon %}
+<div class="header-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+    <span class="material-icons">pets</span>
+</div>
+{% endblock %}
+
+{% block page_title %}Animal Matching{% endblock %}
+{% block page_subtitle %}Match the animal halves to learn their names!{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'games:dashboard' %}" class="btn btn-outline-secondary">
+    <span class="material-icons">arrow_back</span>
+    Back to Games
+</a>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+/* ===============================
+   CONTAINER
+================================ */
+.levels-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* ===============================
+   STATS CARD
+================================ */
+.stats-card {
+    background: var(--bg-surface);
+    border-radius: 16px;
+    padding: 1rem 1.5rem;
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--card-shadow);
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    max-width: 600px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.stat-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #10b981, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+/* ===============================
+   LEVEL GRID
+================================ */
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+}
+
+.levels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+/* ===============================
+   LEVEL CARD
+================================ */
+.level-card {
+    background: var(--bg-surface);
+    border-radius: 24px;
+    border: 1px solid var(--border-subtle);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.level-card:not(.locked):hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    border-color: #10b981;
+}
+
+.level-card.locked {
+    opacity: 0.6;
+    filter: grayscale(0.6);
+    pointer-events: none;
+}
+
+/* ===============================
+   LEVEL HEADER
+================================ */
+.level-header {
+    padding: 1.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.level-number {
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+
+.level-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: #10b981;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.level-card.locked .level-icon {
+    background: #64748b;
+}
+
+/* ===============================
+   LEVEL BODY
+================================ */
+.level-body {
+    padding: 1.3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.level-info-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.level-info-row .material-icons {
+    font-size: 1.1rem;
+    color: #10b981;
+}
+
+.level-card.locked .material-icons {
+    color: #64748b;
+}
+
+/* ===============================
+   PLAY BUTTON
+================================ */
+.play-btn {
+    margin-top: 1rem;
+    background: #e5f9f0;
+    color: #10b981;
+    font-weight: 700;
+    padding: 0.8rem;
+    border-radius: 14px;
+    text-align: center;
+}
+
+.level-card:not(.locked):hover .play-btn {
+    background: #10b981;
+    color: white;
+}
+
+/* ===============================
+   MOBILE
+================================ */
+@media (max-width: 768px) {
+    .stats-card {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="levels-container">
+
+    <!-- Progress Stats -->
+    <div class="stats-card">
+        <div class="stat-item">
+            <div class="stat-value">{{ progress.highest_level_completed }}/{{ levels|length }}</div>
+            <div class="stat-label">Levels</div>
+        </div>
+
+        <div class="stat-item">
+            <div class="stat-value">{{ progress.total_score }}</div>
+            <div class="stat-label">Stars</div>
+        </div>
+
+        <div class="stat-item">
+            <div class="stat-value">
+                {% if levels %}
+                    {% widthratio progress.highest_level_completed levels|length 100 %}%
+                {% else %}
+                    0%
+                {% endif %}
+            </div>
+            <div class="stat-label">Progress</div>
+        </div>
+    </div>
+
+    <div class="section-title">Adventure Path</div>
+
+    <div class="levels-grid">
+        {% for level in levels %}
+            {% if level.level > progress.highest_level_completed|add:1 %}
+                <div class="level-card locked">
+                    <div class="level-header">
+                        <span class="level-number">Level {{ level.level }}</span>
+                        <div class="level-icon">
+                            <span class="material-icons">lock</span>
+                        </div>
+                    </div>
+                    <div class="level-body">
+                        <div class="level-info-row">
+                            <span class="material-icons">extension</span>
+                            <span><strong>{{ level.animal_count }}</strong> Animals</span>
+                        </div>
+                        <div class="play-btn">Locked</div>
+                    </div>
+                </div>
+            {% else %}
+                <a href="{% url 'games:animal_matching_game' level.level %}" class="level-card">
+                    <div class="level-header">
+                        <span class="level-number">Level {{ level.level }}</span>
+                        <div class="level-icon">
+                            <span class="material-icons">pets</span>
+                        </div>
+                    </div>
+                    <div class="level-body">
+                        <div class="level-info-row">
+                            <span class="material-icons">extension</span>
+                            <span><strong>{{ level.animal_count }}</strong> Animals</span>
+                        </div>
+                        <div class="play-btn">Start Adventure</div>
+                    </div>
+                </a>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

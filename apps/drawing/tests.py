@@ -2,6 +2,7 @@ from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from .models import Drawing, DrawingSession
+from apps.users.models import ParentProfile
 import json
 
 User = get_user_model()
@@ -27,6 +28,7 @@ class DrawingModelTest(TestCase):
             first_name='Test',
             last_name='Parent'
         )
+        ParentProfile.objects.create(user=self.parent_user)
     
     def test_drawing_creation(self):
         """Test creating a drawing"""

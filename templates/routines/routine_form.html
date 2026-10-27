@@ -1,85 +1,79 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ title }} - NEURO Learning{% endblock %}
+{% block page_subtitle %}
+    {% if child %}
+        Set up a daily routine for <strong>{{ child.get_full_name }}</strong>
+    {% else %}
+        Edit routine details
+    {% endif %}
+{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white">
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb mb-0">
-                            <li class="breadcrumb-item"><a href="{% url 'routines:routine_list' %}">Routines</a></li>
-                            <li class="breadcrumb-item active">{{ title }}</li>
-                        </ol>
-                    </nav>
+<div class="container-custom" style="max-width: 800px; margin: 0 auto;">
+    <div class="section-card">
+        <h3 class="section-title-sm">
+            <span class="material-icons">event_note</span>
+            Routine Details
+        </h3>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="{{ form.title.id_for_label }}" class="form-label">
+                    <span class="material-icons"
+                        style="font-size: 18px; vertical-align: middle; margin-right: 4px;">label</span>
+                    Routine Title
+                </label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                <div style="color: var(--accent-secondary); font-size: 0.8rem; mt: 0.5rem;">
+                    {% for error in form.title.errors %}{{ error }}{% endfor %}
                 </div>
-                <div class="card-body">
-                    <h4 class="mb-4">
-                        <i class="fas fa-calendar-check text-primary me-2"></i>
-                        {{ title }}
-                    </h4>
-                    
-                    <form method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.title.id_for_label }}" class="form-label">
-                                <i class="fas fa-heading me-2"></i>Routine Title
-                            </label>
-                            {{ form.title }}
-                            {% if form.title.errors %}
-                            <div class="text-danger small mt-1">
-                                {% for error in form.title.errors %}
-                                {{ error }}
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.description.id_for_label }}" class="form-label">
-                                <i class="fas fa-align-left me-2"></i>Description
-                            </label>
-                            {{ form.description }}
-                            {% if form.description.errors %}
-                            <div class="text-danger small mt-1">
-                                {% for error in form.description.errors %}
-                                {{ error }}
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.assigned_to.id_for_label }}" class="form-label">
-                                <i class="fas fa-users me-2"></i>Assign to Children
-                            </label>
-                            {{ form.assigned_to }}
-                            {% if form.assigned_to.errors %}
-                            <div class="text-danger small mt-1">
-                                {% for error in form.assigned_to.errors %}
-                                {{ error }}
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                            <div class="form-text">Select the children who should follow this routine.</div>
-                        </div>
-                        
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'routines:routine_list' %}" class="btn btn-outline-secondary">
-                                <i class="fas fa-arrow-left me-2"></i>Cancel
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i>Save Routine
-                            </button>
-                        </div>
-                    </form>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.description.id_for_label }}" class="form-label">
+                    <span class="material-icons"
+                        style="font-size: 18px; vertical-align: middle; margin-right: 4px;">description</span>
+                    Description
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                <div style="color: var(--accent-secondary); font-size: 0.8rem; mt: 0.5rem;">
+                    {% for error in form.description.errors %}{{ error }}{% endfor %}
+                </div>
+                {% endif %}
+                <p class="feature-desc" style="margin-top: 0.5rem;">Keep it clear and supportive. This helps the child
+                    understand their daily goals.</p>
+            </div>
+
+            {% if child %}
+            <div class="form-group"
+                style="padding: 1rem; background: var(--accent-primary-light); border-radius: 12px; border: 1px solid var(--accent-primary);">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <span class="material-icons" style="color: var(--accent-primary);">person</span>
+                    <div>
+                        <p style="margin: 0; font-weight: 600; font-size: 0.9rem; color: var(--accent-primary);">
+                            Assigned to Child</p>
+                        <p style="margin: 0; font-size: 1rem; color: var(--text-primary);">{{ child.get_full_name }}</p>
+                    </div>
                 </div>
             </div>
-        </div>
+            {% endif %}
+
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                <a href="{% url 'routines:teacher_dashboard' %}" class="btn btn-outline text-muted">
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <span class="material-icons">save</span>
+                    Save Routine
+                </button>
+            </div>
+        </form>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

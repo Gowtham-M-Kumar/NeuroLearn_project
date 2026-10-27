@@ -282,7 +282,7 @@
         <div class="duo-dashboard-grid">
             {% for drawing in drawings %}
             <div class="duo-module-card duo-blue text-center d-flex flex-column align-items-center justify-content-center">
-                <span class="duo-icon mb-2">🖼️</span>
+                <span class="material-icons duo-icon mb-2">image</span>
                 <span class="duo-module-title">{{ drawing.title|default:"Untitled" }}</span>
                 <div class="mt-2 text-white-50 small">{{ drawing.created_at|date:"M d, Y" }}</div>
                 <canvas id="preview-{{ drawing.id }}" width="200" height="150"></canvas>

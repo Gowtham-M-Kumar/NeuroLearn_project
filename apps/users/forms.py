@@ -1,11 +1,25 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.core.exceptions import ValidationError
-from .models import CustomUser, ParentProfile, TherapistProfile, TeacherProfile, ChildProfile
+from .models import CustomUser, TeacherProfile, ChildProfile
 
 
-class CustomUserCreationForm(UserCreationForm):
-    """Form for creating new users with role-based fields"""
+class CustomUserCreationForm(forms.ModelForm):
+    """Simplified form for creating new users with no constraints"""
+    
+    password = forms.CharField(
+        label='Password',
+        widget=forms.PasswordInput(attrs={'class': 'register-input'}),
+        required=True
+    )
+    
+    role = forms.ChoiceField(
+        choices=CustomUser.UserRole.choices,
+        widget=forms.Select(attrs={'class': 'register-input'}),
+        required=True,
+        initial=CustomUser.UserRole.CHILD,
+        label='I am a'
+    )
     
     class Meta:
         model = CustomUser
@@ -13,14 +27,37 @@ class CustomUserCreationForm(UserCreationForm):
         widgets = {
             'first_name': forms.TextInput(attrs={'class': 'register-input'}),
             'last_name': forms.TextInput(attrs={'class': 'register-input'}),
-            'email': forms.EmailInput(attrs={'class': 'register-input'}),
-            'role': forms.Select(attrs={'class': 'register-input'}),
+            'email': forms.TextInput(attrs={'class': 'register-input'}),  # Use TextInput instead of EmailInput to be less strict
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['password1'].widget.attrs.update({'class': 'register-input'})
-        self.fields['password2'].widget.attrs.update({'class': 'register-input'})
+        # Make all fields except email and password optional
+        self.fields['first_name'].required = False
+        self.fields['last_name'].required = False
+        self.fields['email'].required = True
+    
+    def clean_email(self):
+        """Allow any email format and handle duplicates"""
+        email = self.cleaned_data.get('email')
+        if not email:
+            raise ValidationError('Email is required')
+        
+        # If email already exists, append a timestamp to make it unique
+        if CustomUser.objects.filter(email=email).exists():
+            import time
+            email = f"{email.split('@')[0]}_{int(time.time())}@{email.split('@')[1] if '@' in email else 'example.com'}"
+        
+        return email
+    
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        # Set the password without any validation
+        user.set_password(self.cleaned_data['password'])
+        if commit:
+            user.save()
+        return user
+
 
 
 class CustomAuthenticationForm(AuthenticationForm):
@@ -39,31 +76,6 @@ class CustomAuthenticationForm(AuthenticationForm):
         super().__init__(*args, **kwargs)
         self.fields['username'].widget.attrs.update({'class': 'login-input'})
         self.fields['password'].widget.attrs.update({'class': 'login-input'})
-
-
-class ParentProfileForm(forms.ModelForm):
-    """Form for parent profile creation/editing"""
-    
-    class Meta:
-        model = ParentProfile
-        fields = ('emergency_contact', 'address')
-        widgets = {
-            'emergency_contact': forms.TextInput(attrs={'class': 'form-control'}),
-            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-        }
-
-
-class TherapistProfileForm(forms.ModelForm):
-    """Form for therapist profile creation/editing"""
-    
-    class Meta:
-        model = TherapistProfile
-        fields = ('license_number', 'specializations', 'years_of_experience')
-        widgets = {
-            'license_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'specializations': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'years_of_experience': forms.NumberInput(attrs={'class': 'form-control'}),
-        }
 
 
 class TeacherProfileForm(forms.ModelForm):
@@ -107,4 +119,5 @@ class UserProfileForm(forms.ModelForm):
             'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
             'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
-        } 
+        }
+ 

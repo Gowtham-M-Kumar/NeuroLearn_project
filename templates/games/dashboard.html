@@ -1,60 +1,193 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Games Dashboard - NEURO Learn{% endblock %}
+{% block page_header_icon %}{% endblock %}
+{% block page_title %}Gaming{% endblock %}
 
-{% block content %}
-<div class="duo-dashboard-container mx-auto py-5">
-    <div class="duo-card welcome-card text-center shadow-sm mb-4">
-        <h2 class="duo-title mb-2">
-            <span class="me-2" style="font-size:2.5rem;">🎮</span>Learning Games
-        </h2>
-        <p class="duo-lead">Play fun games to boost your learning!</p>
-    </div>
-    <div class="duo-card shadow-sm p-4">
-        <h3 class="duo-section-title mb-4 text-center">Available Games</h3>
-        <div class="duo-dashboard-grid">
-            {% for game in games %}
-            {% if 'color matching' in game.name|lower %}
-            <a href="{% url 'games:color_matching_levels' %}" class="duo-module-card duo-blue text-center d-flex flex-column align-items-center justify-content-center text-decoration-none">
-                <span class="duo-icon mb-2">🎨</span>
-                <span class="duo-module-title">{{ game.name }}</span>
-            </a>
-            {% else %}
-            <a href="#" class="duo-module-card duo-blue text-center d-flex flex-column align-items-center justify-content-center text-decoration-none disabled">
-                <span class="duo-icon mb-2">{{ game.icon|default:'🎲' }}</span>
-                <span class="duo-module-title">{{ game.name }}</span>
-            </a>
-            {% endif %}
-            {% empty %}
-            <div class="text-center w-100 text-muted">No games available yet.</div>
-            {% endfor %}
-        </div>
-    </div>
-</div>
+{% block extra_head %}
+<style>
+    .games-dashboard-section {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(14, 165, 233, 0.05) 100%);
+        padding: 2rem;
+        border-radius: 20px;
+        border: 1px solid var(--border-subtle);
+        margin-bottom: 2rem;
+    }
+
+    .games-section-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .games-section-header h3 {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .games-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .game-card-item {
+        display: flex;
+        flex-direction: column;
+        padding: 2rem;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 20px;
+        text-decoration: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .game-card-item::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, var(--accent-primary-light), transparent);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .game-card-item:hover {
+        transform: translateY(-8px);
+        border-color: var(--accent-primary);
+        box-shadow: 0 20px 40px rgba(99, 102, 241, 0.15);
+    }
+
+    .game-card-item:hover::before {
+        opacity: 1;
+    }
+
+    .game-card-item.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .game-card-item.disabled:hover {
+        transform: none;
+        border-color: var(--border-subtle);
+        box-shadow: var(--card-shadow);
+    }
+
+    .game-icon-wrapper {
+        width: 80px;
+        height: 80px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+        font-size: 2.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .game-card-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.75rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .game-card-desc {
+        font-size: 0.95rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        position: relative;
+        z-index: 1;
+        margin-bottom: 1.5rem;
+        flex-grow: 1;
+    }
+
+    .game-card-arrow {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--accent-primary);
+        font-weight: 600;
+        position: relative;
+        z-index: 1;
+        transition: gap 0.3s ease;
+    }
+
+    .game-card-item:hover .game-card-arrow {
+        gap: 0.75rem;
+    }
+</style>
 {% endblock %}
 
-<style>
-.stat-item {
-    padding: 1rem;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-}
+{% block content %}
+<div class="container-custom">
+    <section class="games-dashboard-section">
+        <div class="games-section-header">
+            <span class="material-icons" style="font-size: 2rem; color: var(--accent-primary);">sports_esports</span>
+            <h3>Available Games</h3>
+        </div>
 
-.card {
-    transition: transform 0.2s ease-in-out;
-}
-
-.card:hover {
-    transform: translateY(-5px);
-}
-
-.btn {
-    border-radius: 25px;
-    padding: 0.5rem 1.5rem;
-}
-
-.fa-3x {
-    color: #6c757d;
-}
-</style> 
+        {% if games %}
+        <div class="games-grid">
+            {% for game in games %}
+            {% if 'spot the difference' not in game.name|lower %}
+            {% if 'color matching' in game.name|lower %}
+            <a href="{% url 'games:color_matching_levels' %}" class="game-card-item" id="card-game-colormatch">
+                <div class="game-icon-wrapper"
+                    style="background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));">
+                    <span class="material-icons" style="color: white;">palette</span>
+                </div>
+                <h4 class="game-card-title">{{ game.name }}</h4>
+                <p class="game-card-desc">{{ game.description|truncatewords:10 }}</p>
+                <span class="game-card-arrow">
+                    Play Now
+                    <span class="material-icons" style="font-size: 1.2rem;">arrow_forward</span>
+                </span>
+            </a>
+            {% elif 'animal matching' in game.name|lower %}
+            <a href="{% url 'games:animal_matching_levels' %}" class="game-card-item" id="card-game-animalmatch">
+                <div class="game-icon-wrapper" style="background: linear-gradient(135deg, #10b981, #3b82f6);">
+                    <span class="material-icons" style="color: white;">pets</span>
+                </div>
+                <h4 class="game-card-title">{{ game.name }}</h4>
+                <p class="game-card-desc">{{ game.description|truncatewords:10 }}</p>
+                <span class="game-card-arrow">
+                    Play Now
+                    <span class="material-icons" style="font-size: 1.2rem;">arrow_forward</span>
+                </span>
+            </a>
+            {% else %}
+            <div class="game-card-item disabled">
+                <div class="game-icon-wrapper"
+                    style="background: var(--accent-primary-light); color: var(--accent-primary);">
+                    <span class="material-icons">casino</span>
+                </div>
+                <h4 class="game-card-title">{{ game.name }}</h4>
+                <p class="game-card-desc">New adventures coming soon!</p>
+                <span class="game-card-arrow" style="color: var(--text-secondary);">
+                    Coming Soon
+                    <span class="material-icons" style="font-size: 1.2rem;">hourglass_empty</span>
+                </span>
+            </div>
+            {% endif %}
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 3rem 2rem;">
+            <span class="material-icons"
+                style="font-size: 4rem; color: var(--text-secondary); display: block; margin-bottom: 1rem;">sports_esports</span>
+            <p class="page-subtitle">No games available yet. Check back soon!</p>
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

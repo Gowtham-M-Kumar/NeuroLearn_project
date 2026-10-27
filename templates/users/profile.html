@@ -1,71 +1,521 @@
 {% extends 'base.html' %}
-{% block title %}Profile - NEURO Learn{% endblock %}
+{% load static %}
+
+{% block title %}My Profile - NEURO Learning Platform{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Facebook Profile Layout */
+    .profile-container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0;
+    }
+
+    /* Header Section with Violet-Black Gradient */
+    .profile-header-wrapper {
+        background: linear-gradient(135deg, #000000 0%, #1a0033 40%, #4b0082 100%);
+        border-radius: 20px;
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        margin-bottom: 2.5rem;
+        padding: 3.5rem 2.5rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .profile-header-wrapper::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at top right, rgba(139, 92, 246, 0.1), transparent);
+        pointer-events: none;
+    }
+
+    /* Avatar & Name Area */
+    .profile-header-content {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .profile-avatar-wrapper {
+        width: 168px;
+        height: 168px;
+        background: var(--bg-surface);
+        border: 4px solid var(--bg-surface);
+        border-radius: 50%;
+        overflow: hidden;
+        flex-shrink: 0;
+        z-index: 10;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .profile-avatar-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .profile-avatar-initial {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 4rem;
+        font-weight: 800;
+        background: var(--accent-primary);
+        color: white;
+    }
+
+    .profile-info-main {
+        flex: 1;
+        padding-bottom: 1rem;
+    }
+
+    .profile-name {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #ffffff;
+        margin: 0 0 0.25rem 0;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .profile-meta-row {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: 600;
+    }
+
+    .profile-meta-row .intro-item .material-icons {
+        color: #a78bfa;
+    }
+
+    /* Two Column Content Layout */
+    .profile-body-grid {
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        gap: 1.5rem;
+    }
+
+    /* Left Sidebar Cards */
+    .sidebar-card {
+        background: var(--bg-surface);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid var(--border-subtle);
+        margin-bottom: 1.5rem;
+        box-shadow: var(--card-shadow);
+    }
+
+    .sidebar-card h3 {
+        font-size: 1.25rem;
+        font-weight: 800;
+        margin-bottom: 1.5rem;
+        color: var(--text-primary);
+    }
+
+    .intro-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .intro-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+    }
+
+    .intro-item .material-icons {
+        color: var(--text-secondary);
+        font-size: 1.25rem;
+    }
+
+    /* Main Content Sections */
+    .profile-section {
+        background: var(--bg-surface);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-subtle);
+        box-shadow: var(--card-shadow);
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-header h3 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    /* Form Elements Enhancements */
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-input {
+        background: var(--bg-main) !important;
+        border: 1px solid var(--border-subtle) !important;
+        border-radius: 8px !important;
+        padding: 10px 12px !important;
+        font-size: 0.95rem !important;
+    }
+
+    .form-input:focus {
+        border-color: var(--accent-primary) !important;
+        background: var(--bg-surface) !important;
+    }
+
+    /* Sticky Sidebar for desktop */
+    @media (min-width: 1024px) {
+        .profile-sidebar {
+            position: sticky;
+            top: 1rem;
+        }
+    }
+
+    @media (max-width: 900px) {
+        .profile-body-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .profile-header-content {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-top: -60px;
+        }
+
+        .profile-meta-row {
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="duo-dashboard-container mx-auto py-5">
-    <div class="duo-card welcome-card text-center shadow-sm mb-4">
-        <div class="d-flex flex-column align-items-center justify-content-center">
-            <div class="duo-profile-avatar mb-3">
+<div class="profile-container">
+    <!-- Profile Header Section -->
+    <div class="profile-header-wrapper">
+        <div class="profile-header-content">
+            <div class="profile-avatar-wrapper">
                 {% if user.profile_picture %}
-                    <img src="{{ user.profile_picture.url }}" alt="Profile Picture" class="duo-profile-img">
+                <img src="{{user.profile_picture.url}}" alt="Profile Picture">
                 {% else %}
-                    <img src="/static/img/default_avatar.svg" alt="Default Avatar" class="duo-profile-img">
+                <div class="profile-avatar-initial">{{user.first_name|first|default:user.username|first|upper}}</div>
                 {% endif %}
             </div>
-            <h2 class="duo-title mb-1">{{ user.get_full_name|default:user.email }}</h2>
-            <div class="duo-lead">My Profile</div>
+            <div class="profile-info-main">
+                <h1 class="profile-name">{{user.get_full_name|default:user.username}}</h1>
+                <div class="profile-meta-row">
+                    <div class="intro-item">
+                        <span class="material-icons">stars</span>
+                        {{user.get_role_display|default:"Student"}}
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="duo-card shadow-sm p-4">
-        <form method="post" enctype="multipart/form-data" class="duo-profile-form">
-            {% csrf_token %}
-            <div class="row g-4">
-                <div class="col-md-6">
-                    <label for="id_first_name" class="form-label">First Name</label>
-                    {{ user_form.first_name }}
-                </div>
-                <div class="col-md-6">
-                    <label for="id_last_name" class="form-label">Last Name</label>
-                    {{ user_form.last_name }}
-                </div>
-                <div class="col-md-6">
-                    <label for="id_email" class="form-label">Email</label>
-                    {{ user_form.email }}
-                    <div class="form-text">Email cannot be changed</div>
-                </div>
-                <div class="col-md-6">
-                    <label for="id_phone_number" class="form-label">Phone Number</label>
-                    {{ user_form.phone_number }}
-                </div>
-                <div class="col-md-6">
-                    <label for="id_date_of_birth" class="form-label">Date of Birth</label>
-                    {{ user_form.date_of_birth }}
-                </div>
-                <div class="col-md-6">
-                    <label for="id_profile_picture" class="form-label">Profile Picture</label>
-                    {{ user_form.profile_picture }}
-                </div>
-            </div>
-            <hr class="my-4">
-            <h5 class="mb-3">Child Information</h5>
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <label for="id_age" class="form-label">Age</label>
-                    {{ profile_form.age }}
-                </div>
-                <div class="col-md-4">
-                    <label for="id_learning_level" class="form-label">Learning Level</label>
-                    {{ profile_form.learning_level }}
-                </div>
-                <div class="col-md-12">
-                    <label for="id_diagnosis_info" class="form-label">Diagnosis Information</label>
-                    {{ profile_form.diagnosis_info }}
+
+    <!-- Main Content Grid Wrapped in Form -->
+    <form method="post" enctype="multipart/form-data" class="profile-body-grid">
+        {% csrf_token %}
+
+        <!-- Left Sidebar: Intro/Quick Info -->
+        <aside class="profile-sidebar">
+            <div class="sidebar-card">
+                <h3>Intro</h3>
+                <div class="intro-list">
+                    <div class="intro-item">
+                        <span class="material-icons">email</span>
+                        {{user.email}}
+                    </div>
+                    <div class="intro-item">
+                        <span class="material-icons">cake</span>
+                        Born: {{user.date_of_birth|default:"Not set"}}
+                    </div>
+                    {% if user.role == 'child' %}
+                    <div class="intro-item">
+                        <span class="material-icons">child_care</span>
+                        Age: {{profile_form.age.value}} years
+                    </div>
+                    {% endif %}
+                    <div class="intro-item">
+                        <span class="material-icons">schedule</span>
+                        Joined: {{user.date_joined|date:"F Y"}}
+                    </div>
                 </div>
             </div>
-            <div class="d-flex justify-content-end mt-4">
-                <a href="/dashboard/" class="btn btn-outline-secondary me-2">Cancel</a>
-                <button type="submit" class="btn btn-success">Save Changes</button>
+
+            <!-- Profile Picture Section moved to sidebar -->
+            <div class="sidebar-card">
+                <h3>Update Photo</h3>
+                <div id="newImagePreview"
+                    style="width: 100%; aspect-ratio: 1/1; border-radius: 12px; overflow: hidden; border: 2px dashed var(--border-subtle); background: var(--bg-main); display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                    <div style="text-align: center; color: var(--text-secondary);">
+                        <span class="material-icons" style="font-size: 3rem; opacity: 0.3;">add_photo_alternate</span>
+                        <p style="font-size: 0.8rem;">Change profile picture</p>
+                    </div>
+                </div>
+                <div class="file-upload-wrapper">
+                    <label class="file-upload-btn" style="padding: 0.5rem; font-size: 0.8rem;">
+                        <span class="material-icons">upload</span>
+                        <span id="fileNameLabel">Upload New</span>
+                        {{user_form.profile_picture}}
+                    </label>
+                </div>
             </div>
-        </form>
-    </div>
+        </aside>
+
+        <!-- Right Content: Full Settings Form -->
+        <main class="profile-main">
+            <!-- Account Settings -->
+            <div class="profile-section">
+                <div class="section-header">
+                    <span class="material-icons">manage_accounts</span>
+                    <h3>Account Settings</h3>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">First Name</label>
+                        {{user_form.first_name}}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Last Name</label>
+                        {{user_form.last_name}}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Phone Num</label>
+                        {{user_form.phone_number}}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date of Birth</label>
+                        {{user_form.date_of_birth}}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Role Specific Settings -->
+            <div class="profile-section">
+                <div class="section-header">
+                    <span class="material-icons">auto_awesome</span>
+                    <h3>{{user.get_role_display|default:"Child"}} Details</h3>
+                </div>
+                {% if user.role == 'child' %}
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Current Age</label>
+                        {{profile_form.age}}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Module Level</label>
+                        {{profile_form.learning_level}}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Clinical / Educational Notes</label>
+                    {{profile_form.diagnosis_info}}
+                </div>
+                {% elif user.role == 'teacher' %}
+                <div class="form-group">
+                    <label class="form-label">Class Information</label>
+                    {{profile_form.classroom_info}}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Grade Level</label>
+                    {{profile_form.grade_level}}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Notification Settings -->
+            <div class="profile-section">
+                <div class="section-header">
+                    <span class="material-icons">notifications_active</span>
+                    <h3>Notification Preferences</h3>
+                </div>
+                
+                <div class="card-modern" style="margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; padding: 1.5rem; border: 1px solid var(--border-subtle); border-radius: 20px; background: linear-gradient(90deg, rgba(99, 102, 241, 0.05) 0%, rgba(6, 182, 212, 0.05) 100%);">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="background: var(--bg-surface); width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-subtle);">
+                            <span class="material-icons" style="color: var(--accent-primary);">notifications_active</span>
+                        </div>
+                        <div>
+                            <h4 style="margin: 0; font-size: 1.1rem; font-weight: 700;">Routine Reminders</h4>
+                            <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary);">Enable push notifications to receive timely alerts about activities.</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="requestNotificationPermission()" class="cta-btn" id="btn-enable-notifications" style="padding: 0.75rem 1.5rem;">Enable Alerts</button>
+                </div>
+                <div id="notification-status" style="margin-top: -0.5rem; margin-bottom: 0.5rem; font-size: 0.8rem; text-align: right; padding-right: 1rem; color: var(--accent-secondary); font-weight: 600;"></div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;">
+                <a href="{% url 'users:dashboard' %}" class="btn btn-secondary"
+                    style="border-radius: 8px; padding: 0.6rem 1.5rem;">Cancel</a>
+                <button type="submit" class="btn btn-primary" style="border-radius: 8px; padding: 0.6rem 2rem;">Save
+                    Changes</button>
+            </div>
+        </main>
+    </form>
 </div>
-{% endblock %} 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Apply custom styling to Django-rendered form inputs
+    document.addEventListener('DOMContentLoaded', function () {
+        // Style all form inputs
+        document.querySelectorAll('input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea').forEach(el => {
+            if (!el.classList.contains('form-input')) {
+                el.classList.add('form-input');
+            }
+        });
+
+        // File upload preview with image preview
+        const fileInput = document.querySelector('input[type="file"]');
+        const newImagePreview = document.getElementById('newImagePreview');
+        const fileNameLabel = document.getElementById('fileNameLabel');
+
+        if (fileInput && newImagePreview) {
+            fileInput.addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    // Update file name label
+                    if (fileNameLabel) {
+                        fileNameLabel.textContent = file.name;
+                    }
+
+                    // Create image preview
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        newImagePreview.innerHTML = `<img src="${event.target.result}" alt="New profile picture" style="width: 100%; height: 100%; object-fit: cover;">`;
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    // Reset preview if no file selected
+                    newImagePreview.innerHTML = `
+                        <div style="text-align: center; color: var(--text-secondary);">
+                            <span class="material-icons" style="font-size: 4rem; opacity: 0.3;">add_photo_alternate</span>
+                            <p style="margin-top: 0.5rem; font-size: 0.9rem;">Select a file to preview</p>
+                        </div>
+                    `;
+                    if (fileNameLabel) {
+                        fileNameLabel.textContent = 'Choose a new profile picture';
+                    }
+                }
+            });
+        }
+
+        // Form validation feedback
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                const requiredFields = form.querySelectorAll('[required]');
+                let isValid = true;
+
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        field.style.borderColor = '#f44336';
+                        isValid = false;
+                    } else {
+                        field.style.borderColor = '';
+                    }
+                });
+
+                if (!isValid) {
+                    e.preventDefault();
+                    alert('Please fill in all required fields');
+                }
+            });
+        }
+    });
+
+    // Notification Permission Handler
+    async function requestNotificationPermission() {
+        const statusDiv = document.getElementById('notification-status');
+        const button = document.getElementById('btn-enable-notifications');
+        
+        try {
+            const permission = await Notification.requestPermission();
+            
+            if (permission === 'granted') {
+                statusDiv.textContent = '✓ Notifications enabled successfully!';
+                statusDiv.style.color = 'var(--accent-success, #10b981)';
+                button.textContent = 'Alerts Enabled';
+                button.disabled = true;
+                button.style.opacity = '0.6';
+                button.style.cursor = 'not-allowed';
+                
+                new Notification('NeuroLearn Notifications', {
+                    body: 'You will now receive routine reminders!',
+                    icon: '/static/img/logo.png'
+                });
+            } else if (permission === 'denied') {
+                statusDiv.textContent = '✗ Notifications blocked. Please enable in browser settings.';
+                statusDiv.style.color = 'var(--accent-danger, #ef4444)';
+            } else {
+                statusDiv.textContent = 'Notification permission not granted.';
+                statusDiv.style.color = 'var(--text-secondary)';
+            }
+        } catch (error) {
+            console.error('Error requesting notification permission:', error);
+            statusDiv.textContent = '✗ Error enabling notifications.';
+            statusDiv.style.color = 'var(--accent-danger, #ef4444)';
+        }
+    }
+    
+    // Check if notifications are already enabled on page load
+    if (Notification.permission === 'granted') {
+        const button = document.getElementById('btn-enable-notifications');
+        const statusDiv = document.getElementById('notification-status');
+        if (button) {
+            button.textContent = 'Alerts Enabled';
+            button.disabled = true;
+            button.style.opacity = '0.6';
+            button.style.cursor = 'not-allowed';
+        }
+        if (statusDiv) {
+            statusDiv.textContent = '✓ Notifications are enabled';
+            statusDiv.style.color = 'var(--accent-success, #10b981)';
+        }
+    }
+</script>
+{% endblock %}

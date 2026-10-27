@@ -1,36 +1,212 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Learning Dashboard - NEURO Learn{% endblock %}
+{% block page_header_icon %}{% endblock %}
+{% block page_title %}Learning{% endblock %}
+
+{% block extra_head %}
+<style>
+    .learning-dashboard-section {
+        background: linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(99, 102, 241, 0.12) 100%);
+        border-radius: 24px;
+        border: 1px solid var(--border-subtle);
+        padding: 2.5rem 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .learning-section-header {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        margin-bottom: 3rem;
+    }
+
+    .learning-section-header .material-icons {
+        font-size: 2.5rem;
+        color: var(--accent-secondary);
+    }
+
+    .learning-section-header h3 {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
+
+    .learning-modules-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 2.5rem;
+    }
+
+    .learning-module-card {
+        display: flex;
+        flex-direction: column;
+        padding: 2.5rem 2rem;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 24px;
+        text-decoration: none;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .learning-module-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        background-position: center;
+        background-image: linear-gradient(135deg, var(--accent-primary-light), transparent);
+        opacity: 0.6;
+        transition: all 0.4s ease;
+        z-index: 0;
+    }
+
+    #card-alphabet::before {
+        background-image: url('{% static "img/learning_card_bg.png" %}');
+    }
+
+    #card-numbers::before {
+        background-image: url('{% static "img/card_number_bg.png" %}');
+    }
+
+    #card-words::before {
+        background-image: url('{% static "img/card_word_bg.png" %}');
+    }
+
+    #card-emotions::before {
+        background-image: url('{% static "img/card_emotion_bg.png" %}');
+    }
+
+    .learning-module-card::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to bottom, rgba(15, 23, 42, 0.2), rgba(15, 23, 42, 0.6));
+        z-index: 0;
+    }
+
+    .learning-module-card:hover {
+        transform: translateY(-12px);
+        border-color: var(--accent-secondary);
+        box-shadow: 0 24px 48px rgba(6, 182, 212, 0.25);
+    }
+
+    .learning-module-card:hover::before {
+        opacity: 0.9;
+        transform: scale(1.1);
+    }
+
+    .learning-module-card>* {
+        position: relative;
+        z-index: 1;
+    }
+
+
+
+    .learning-module-title {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        letter-spacing: -0.3px;
+    }
+
+    .learning-module-description {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+        flex-grow: 1;
+    }
+
+    .learning-module-arrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--accent-secondary);
+        font-weight: 700;
+        font-size: 1rem;
+        transition: gap 0.3s ease;
+    }
+
+    .learning-module-card:hover .learning-module-arrow {
+        gap: 0.75rem;
+    }
+
+    @media (max-width: 768px) {
+        .learning-dashboard-section {
+            padding: 2rem 1.5rem;
+        }
+
+        .learning-modules-grid {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        .learning-module-card {
+            padding: 2rem;
+        }
+
+        .learning-section-header h3 {
+            font-size: 1.25rem;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="duo-dashboard-container mx-auto py-5">
-    <div class="duo-card welcome-card text-center shadow-sm mb-4">
-        <h2 class="duo-title mb-2">
-            <span class="duo-svg-icon duo-green-bg">{% include 'icons/book.svg' %}</span> Learning
-        </h2>
-        <p class="duo-lead">Explore interactive modules to boost your skills!</p>
-    </div>
-    <div class="duo-card shadow-sm p-4">
-        <h3 class="duo-section-title mb-4 text-center">Learning Modules</h3>
-        <div class="duo-dashboard-grid">
-            <a href="{% url 'learning:alphabet_learning' %}" class="duo-module-card duo-green text-center d-flex flex-column align-items-center justify-content-center text-decoration-none">
-                <span class="duo-svg-icon">{% include 'icons/alphabet.svg' %}</span>
-                <span class="duo-module-title">Alphabet Learning & Tracing</span>
+<div class="container-custom">
+    <section class="learning-dashboard-section">
+        <div class="learning-section-header">
+            <span class="material-icons">menu_book</span>
+            <h3>Learning Modules</h3>
+        </div>
+
+        <div class="learning-modules-grid">
+            <a href="{% url 'learning:alphabet_learning' %}" class="learning-module-card" id="card-alphabet">
+
+                <h4 class="learning-module-title">Alphabet Learning</h4>
+                <p class="learning-module-description">Practice letters and tracing through interactive modules.</p>
+                <span class="learning-module-arrow">
+                    Start Learning
+                    <span class="material-icons" style="font-size: 1.2rem;">arrow_forward</span>
+                </span>
             </a>
-            <a href="{% url 'learning:number_learning' %}" class="duo-module-card duo-blue text-center d-flex flex-column align-items-center justify-content-center text-decoration-none">
-                <span class="duo-svg-icon">{% include 'icons/numbers.svg' %}</span>
-                <span class="duo-module-title">Number Learning & Counting</span>
+
+            <a href="{% url 'learning:number_learning' %}" class="learning-module-card" id="card-numbers">
+
+                <h4 class="learning-module-title">Number Learning</h4>
+                <p class="learning-module-description">Learn counting and number recognition with fun activities.</p>
+                <span class="learning-module-arrow">
+                    Start Learning
+                    <span class="material-icons" style="font-size: 1.2rem;">arrow_forward</span>
+                </span>
             </a>
-            <a href="{% url 'learning:word_learning' %}" class="duo-module-card duo-purple text-center d-flex flex-column align-items-center justify-content-center text-decoration-none">
-                <span class="duo-svg-icon">{% include 'icons/words.svg' %}</span>
-                <span class="duo-module-title">Word Learning & Matching</span>
+
+            <a href="{% url 'learning:word_learning' %}" class="learning-module-card" id="card-words">
+                <h4 class="learning-module-title">Word Learning</h4>
+                <p class="learning-module-description">Expand your vocabulary through interactive word modules.</p>
+                <span class="learning-module-arrow">
+                    Start Learning
+                    <span class="material-icons" style="font-size: 1.2rem;">arrow_forward</span>
+                </span>
             </a>
-            <a href="{% url 'learning:progress_dashboard' %}" class="duo-module-card duo-gold text-center d-flex flex-column align-items-center justify-content-center text-decoration-none">
-                <span class="duo-svg-icon">{% include 'icons/progress.svg' %}</span>
-                <span class="duo-module-title">Progress Dashboard</span>
+
+            <a href="{% url 'learning:emotion_learning' %}" class="learning-module-card" id="card-emotions">
+
+                <h4 class="learning-module-title">Emotion Learning</h4>
+                <p class="learning-module-description">Understand and identify different feelings with videos.</p>
+                <span class="learning-module-arrow">
+                    Start Learning
+                    <span class="material-icons" style="font-size: 1.2rem;">arrow_forward</span>
+                </span>
             </a>
         </div>
-    </div>
+    </section>
 </div>
-{% endblock %} 
+{% endblock %}

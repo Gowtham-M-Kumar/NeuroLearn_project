@@ -1,0 +1,326 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Messages - NEURO Learn{% endblock %}
+
+{% block page_header_icon %}
+<!-- No icon as requested, or a subtle one if needed. Keeping empty as per previous request. -->
+{% endblock %}
+
+{% block page_title %}Messages{% endblock %}
+{% block page_subtitle %}Your conversations{% endblock %}
+
+{% block header_actions %}
+<button class="btn btn-primary">
+    <span class="material-icons">add_comment</span>
+    New Message
+</button>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .messaging-dashboard {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding-bottom: 3rem;
+    }
+
+    /* Search Bar */
+    .search-bar {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 16px;
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow);
+    }
+
+    .search-input {
+        background: transparent;
+        border: none;
+        color: var(--text-primary);
+        font-size: 1rem;
+        flex: 1;
+        outline: none;
+    }
+
+    /* Contact Grid */
+    .contacts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .contact-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 20px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .contact-card:hover {
+        transform: translateY(-4px);
+        border-color: var(--accent-primary);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    /* Hover effect accent */
+    .contact-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--accent-primary);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .contact-card:hover::before {
+        opacity: 1;
+    }
+
+    .avatar-wrapper {
+        position: relative;
+        width: 64px;
+        height: 64px;
+        flex-shrink: 0;
+    }
+
+    .contact-avatar {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        font-weight: 700;
+        overflow: hidden;
+        border: 3px solid var(--bg-main);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .contact-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .online-badge {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        width: 14px;
+        height: 14px;
+        background: #4CAF50;
+        border: 2px solid var(--bg-surface);
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .contact-info {
+        flex: 1;
+        min-width: 0;
+        /* Text truncation fix */
+    }
+
+    .contact-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .contact-role {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .role-badge {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 50px;
+        background: var(--bg-main);
+        color: var(--text-secondary);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: 1px solid var(--border-subtle);
+    }
+
+    /* Role specific colors */
+    .role-parent {
+        color: #ce93d8;
+        border-color: rgba(206, 147, 216, 0.3);
+    }
+
+    .role-teacher {
+        color: #ffb74d;
+        border-color: rgba(255, 183, 77, 0.3);
+    }
+
+    .role-child {
+        color: #64b5f6;
+        border-color: rgba(100, 181, 246, 0.3);
+    }
+
+    .role-therapist {
+        color: #81c784;
+        border-color: rgba(129, 199, 132, 0.3);
+    }
+
+    .last-message {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .msg-icon {
+        font-size: 1rem;
+        color: var(--accent-primary);
+    }
+
+    .empty-state {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 4rem 2rem;
+        background: var(--bg-surface);
+        border: 2px dashed var(--border-subtle);
+        border-radius: 20px;
+        color: var(--text-secondary);
+    }
+
+    .empty-icon {
+        font-size: 5rem;
+        color: var(--border-subtle);
+        margin-bottom: 1.5rem;
+    }
+
+    /* Ensure content starts below header */
+    /* .messaging-dashboard matches standard padding but we can add top margin if needed */
+
+    .btn {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary {
+        background: var(--accent-primary);
+        color: white;
+    }
+
+    @media (max-width: 600px) {
+        .contacts-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="messaging-dashboard">
+
+    <!-- Search -->
+    <div class="search-bar">
+        <span class="material-icons" style="color: var(--text-secondary);">search</span>
+        <input type="text" class="search-input" placeholder="Search conversations..." id="contactSearch">
+    </div>
+
+    <!-- Contacts List -->
+    <div class="contacts-grid">
+        {% for contact in contacts %}
+        <a href="{% url 'messaging:chat_detail' contact.id %}" class="contact-card">
+            <div class="avatar-wrapper">
+                <div class="contact-avatar">
+                    {% if contact.profile_picture %}
+                    <img src="{{ contact.profile_picture.url }}" alt="{{ contact.get_full_name }}">
+                    {% else %}
+                    {{ contact.first_name|default:contact.username|slice:":1"|upper }}
+                    {% endif %}
+                </div>
+                <!-- Mock online status for demo -->
+                <div class="online-badge"></div>
+            </div>
+
+            <div class="contact-info">
+                <div class="contact-name">
+                    {{ contact.get_full_name|default:contact.username }}
+                </div>
+                <div class="contact-role">
+                    <span class="role-badge role-{{ contact.role }}">
+                        {{ contact.get_role_display }}
+                    </span>
+                    {% if contact.last_login %}
+                    <span class="last-active-text" style="font-size: 0.75rem; color: var(--text-secondary); opacity: 0.8; margin-left: 0.5rem;">
+                        • Active {{ contact.last_login|timesince }} ago
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="last-message">
+                    <span class="material-icons msg-icon" style="font-size: 14px;">turn_right</span>
+                    Tap to start chatting
+                </div>
+            </div>
+
+            <span class="material-icons" style="color: var(--text-secondary);">navigate_next</span>
+        </a>
+        {% empty %}
+        <div class="empty-state">
+            <span class="material-icons empty-icon">people_outline</span>
+            <h3>No contacts found</h3>
+            <p>Your network is empty right now. Contacts will appear here automatically.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Simple client-side search
+    document.getElementById('contactSearch').addEventListener('input', function (e) {
+        const term = e.target.value.toLowerCase();
+        document.querySelectorAll('.contact-card').forEach(card => {
+            const name = card.querySelector('.contact-name').textContent.toLowerCase();
+            const role = card.querySelector('.role-badge').textContent.toLowerCase();
+            if (name.includes(term) || role.includes(term)) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

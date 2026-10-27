@@ -1,0 +1,48 @@
+{% extends 'communication/base_aac.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Communication{% endblock %}
+{% block page_title %}Communication Board{% endblock %}
+
+{% block content %}
+<!-- ZONE 1: Sentence Strip & Quick Needs -->
+{% include 'communication/partials/sentence_strip.html' %}
+
+<!-- ZONE 1 Extension: Quick Needs -->
+<h3>Quick Needs</h3>
+<div class="aac-row-scroll" style="margin-bottom: 1rem;">
+    {% for symbol in quick_needs %}
+    <div class="aac-card border-{{ symbol.color_code|default:'yellow' }}"
+        onclick="selectSymbol('{{ symbol.word }}', '{% if symbol.image %}{{ symbol.image.url }}{% endif %}', '{{ symbol.color_code|default:'yellow' }}')">
+        {% if symbol.image %}
+        <img src="{{ symbol.image.url }}" alt="{{ symbol.word }}" class="aac-img">
+        {% else %}
+        <span class="material-icons aac-icon">touch_app</span>
+        {% endif %}
+        <span class="aac-word">{{ symbol.word }}</span>
+    </div>
+    {% empty %}
+    <div style="grid-column: 1/-1; text-align: center; color: #9ca3af;">
+        No quick needs set. Ask a teacher to add some!
+    </div>
+    {% endfor %}
+</div>
+
+<!-- ZONE 3: Categories -->
+<h3>Topics</h3>
+<div class="aac-grid" style="flex-grow: 1;">
+    {% for category in categories %}
+    <a href="{% url 'communication:category_detail' category.id %}" class="aac-card"
+        style="border-color: {{ category.color }}; background-color: #ffffff;">
+        {% if category.icon %}
+        <span class="material-icons aac-icon" style="color: {{ category.color }};">{{ category.icon }}</span>
+        {% else %}
+        <span class="material-icons aac-icon" style="color: {{ category.color }};">folder</span>
+        {% endif %}
+        <span class="aac-word">{{ category.name }}</span>
+    </a>
+    {% endfor %}
+</div>
+
+<script src="{% static 'js/aac_shared.js' %}"></script>
+{% endblock %}

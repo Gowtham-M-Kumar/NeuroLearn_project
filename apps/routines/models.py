@@ -12,10 +12,13 @@ class Routine(models.Model):
         on_delete=models.CASCADE,
         related_name='created_routines'
     )
-    assigned_to = models.ManyToManyField(
+    child = models.OneToOneField(
         settings.AUTH_USER_MODEL,
-        related_name='assigned_routines',
-        limit_choices_to={'role': 'child'}
+        on_delete=models.CASCADE,
+        related_name='routine',
+        limit_choices_to={'role': 'child'},
+        null=True,
+        blank=True
     )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -124,3 +127,72 @@ class RoutineSchedule(models.Model):
     
     def __str__(self):
         return f"{self.routine.title} - {self.child.get_full_name()} - {self.get_day_of_week_display()}"
+class TimetableEntry(models.Model):
+    """Entry in the child's daily timetable"""
+    DAY_TYPE_CHOICES = [
+        ('school', 'School Days'),
+        ('leave', 'Leave Days'),
+    ]
+    
+    TASK_TYPE_CHOICES = [
+        ('sleep', 'Sleep'),
+        ('wake_up', 'Wake Up'),
+        ('food', 'Food'),
+        ('school_time', 'School Time'),
+        ('reach_home', 'Reach Home'),
+        ('learning_exercise', 'Learning Exercise'),
+        ('co_curricular', 'Co-curricular Activity'),
+        ('other', 'Other'),
+    ]
+
+    routine = models.ForeignKey(
+        Routine,
+        on_delete=models.CASCADE,
+        related_name='timetable_entries'
+    )
+    day_type = models.CharField(
+        max_length=10,
+        choices=DAY_TYPE_CHOICES,
+        default='school'
+    )
+    time = models.TimeField()
+    task_type = models.CharField(
+        max_length=50,
+        choices=TASK_TYPE_CHOICES
+    )
+    custom_description = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_('Required if Task Type is Other')
+    )
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['time']
+        unique_together = ['routine', 'day_type', 'time']
+
+class ChildRoutine(models.Model):
+    """Specific routine for children with parent notification support"""
+    child = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='child_routines',
+        limit_choices_to={'role': 'child'}
+    )
+    title = models.CharField(max_length=200)
+    time = models.TimeField()
+    # Stores days as comma-separated integers (0=Monday, 6=Sunday)
+    repeat_days = models.CharField(max_length=50, default="0,1,2,3,4,5,6")
+    notify_parent = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['time']
+
+    def __str__(self):
+        return f"{self.title} for {self.child.get_full_name()} at {self.time}"

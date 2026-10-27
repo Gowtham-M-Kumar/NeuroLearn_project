@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Communication{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="{% static 'css/modern_layout.css' %}">
+    <link rel="stylesheet" href="{% static 'css/aac.css' %}">
+</head>
+
+<body class="aac-mode">
+
+    <div class="aac-container">
+        <!-- Minimal Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <a href="{% url 'users:dashboard' %}" class="aac-back-btn">
+                <span class="material-icons">home</span>
+                Exit AAC
+            </a>
+            <div style="font-weight: 700; font-size: 1.2rem;">{% block page_title %}{% endblock %}</div>
+        </div>
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <script>
+        // Simple Text-to-Speech Helper
+        function speak(text) {
+            window.speechSynthesis.cancel();
+
+            // Normalize for pronunciation
+            let spokenText = text;
+
+            // If it's a single capital letter 'I', speak it as 'Eye' or just pass it directly.
+            // Often browsers say "Capital I". Converting to lowercase usually helps "i".
+            // But 'I' as a word should be 'I'.
+            // Let's rely on lowercase for single characters to avoid "Capital A", "Capital B".
+            if (text.length === 1 && text.match(/[A-Z]/)) {
+                spokenText = text.toLowerCase();
+            }
+
+            const utterance = new SpeechSynthesisUtterance(spokenText);
+            utterance.rate = 0.9;
+            utterance.pitch = 1.1; // Slightly higher pitch often clearer for kids
+            window.speechSynthesis.speak(utterance);
+        }
+    </script>
+</body>
+
+</html>

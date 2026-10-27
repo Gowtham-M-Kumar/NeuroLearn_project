@@ -1,173 +1,208 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}User Management - NEURO Learning{% endblock %}
+{% block page_title %}Student Management{% endblock %}
+{% block page_subtitle %}Overview and analytics for your assigned students.{% endblock %}
+
+{% block extra_head %}
+<style>
+    .student-list-container {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .student-table-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .student-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .student-table th {
+        text-align: left;
+        padding: 1.25rem 1.5rem;
+        background: rgba(99, 102, 241, 0.03);
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .student-table td {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-subtle);
+        color: var(--text-primary);
+        vertical-align: middle;
+    }
+
+    .student-row:last-child td {
+        border-bottom: none;
+    }
+
+    .student-row:hover {
+        background: rgba(99, 102, 241, 0.02);
+    }
+
+    .student-identity {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .avatar-md {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    .action-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 1rem;
+        background: var(--bg-main);
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 700;
+        transition: all 0.2s ease;
+    }
+
+    .action-link:hover {
+        background: var(--accent-primary);
+        color: white;
+        border-color: var(--accent-primary);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    }
+
+    .search-filter-bar {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .search-input-wrapper {
+        position: relative;
+        flex-grow: 1;
+    }
+
+    .search-input-wrapper .material-icons {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 3rem;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 14px;
+        color: var(--text-primary);
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0">
-                    <i class="fas fa-users text-primary me-2"></i>
-                    User Management
-                </h1>
-                <a href="{% url 'admin:users_customuser_add' %}" class="btn btn-primary">
-                    <i class="fas fa-user-plus me-2"></i>Add User
-                </a>
-            </div>
+<div class="student-list-container">
 
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-list text-primary me-2"></i>
-                        All Users
-                    </h5>
-                </div>
-                <div class="card-body">
-                    {% if users %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>User</th>
-                                    <th>Role</th>
-                                    <th>Email</th>
-                                    <th>Status</th>
-                                    <th>Joined</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for user in users %}
-                                <tr>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            {% if user.profile_picture %}
-                                            <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
-                                            {% else %}
-                                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
-                                                <i class="fas fa-user text-muted"></i>
-                                            </div>
-                                            {% endif %}
-                                            <div>
-                                                <div class="fw-bold">{{ user.get_full_name }}</div>
-                                                <small class="text-muted">@{{ user.username }}</small>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-{% if user.role == 'parent' %}primary{% elif user.role == 'therapist' %}success{% elif user.role == 'teacher' %}warning{% else %}info{% endif %}">
-                                            {{ user.get_role_display }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <a href="mailto:{{ user.email }}" class="text-decoration-none">
-                                            {{ user.email }}
-                                        </a>
-                                    </td>
-                                    <td>
-                                        {% if user.is_active %}
-                                        <span class="badge bg-success">Active</span>
-                                        {% else %}
-                                        <span class="badge bg-danger">Inactive</span>
-                                        {% endif %}
-                                        {% if user.is_staff %}
-                                        <span class="badge bg-warning ms-1">Staff</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <small class="text-muted">{{ user.date_joined|date:"M d, Y" }}</small>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <a href="{% url 'users:user_detail' user.id %}" class="btn btn-outline-primary btn-sm">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            <a href="{% url 'admin:users_customuser_change' user.id %}" class="btn btn-outline-secondary btn-sm">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            {% if user.is_active %}
-                                            <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deactivateModal{{ user.id }}">
-                                                <i class="fas fa-ban"></i>
-                                            </button>
-                                            {% else %}
-                                            <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#activateModal{{ user.id }}">
-                                                <i class="fas fa-check"></i>
-                                            </button>
-                                            {% endif %}
-                                        </div>
-                                    </td>
-                                </tr>
-                                
-                                <!-- Deactivate Modal -->
-                                {% if user.is_active %}
-                                <div class="modal fade" id="deactivateModal{{ user.id }}" tabindex="-1" aria-labelledby="deactivateModalLabel{{ user.id }}" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title" id="deactivateModalLabel{{ user.id }}">Deactivate User</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                Are you sure you want to deactivate <strong>{{ user.get_full_name }}</strong>?
-                                                This will prevent them from logging in.
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <form method="post" action="{% url 'admin:users_customuser_change' user.id %}" style="display: inline;">
-                                                    {% csrf_token %}
-                                                    <input type="hidden" name="is_active" value="0">
-                                                    <button type="submit" class="btn btn-danger">Deactivate</button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endif %}
-                                
-                                <!-- Activate Modal -->
-                                {% if not user.is_active %}
-                                <div class="modal fade" id="activateModal{{ user.id }}" tabindex="-1" aria-labelledby="activateModalLabel{{ user.id }}" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title" id="activateModalLabel{{ user.id }}">Activate User</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                Are you sure you want to activate <strong>{{ user.get_full_name }}</strong>?
-                                                This will allow them to log in again.
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <form method="post" action="{% url 'admin:users_customuser_change' user.id %}" style="display: inline;">
-                                                    {% csrf_token %}
-                                                    <input type="hidden" name="is_active" value="1">
-                                                    <button type="submit" class="btn btn-success">Activate</button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endif %}
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="text-center py-5">
-                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
-                        <h4 class="text-muted">No Users Found</h4>
-                        <p class="text-muted">There are no users in the system yet.</p>
-                        <a href="{% url 'admin:users_customuser_add' %}" class="btn btn-primary">
-                            <i class="fas fa-user-plus me-2"></i>Add First User
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
+    <div class="search-filter-bar">
+        <div class="search-input-wrapper">
+            <span class="material-icons">search</span>
+            <input type="text" placeholder="Search students by name or email..." class="search-input">
         </div>
+        <button class="cta-btn cta-outline" style="padding: 0 1.5rem; height: 100%;">
+            <span class="material-icons">filter_list</span>
+            Filters
+        </button>
     </div>
+
+    <div class="student-table-card">
+        {% if users %}
+        <table class="student-table">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Last Active</th>
+                    <th style="text-align: right;">Analytics</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr class="student-row">
+                    <td>
+                        <div class="student-identity">
+                            <div class="avatar-md">{{user.first_name|first|upper}}</div>
+                            <div>
+                                <div style="font-weight: 700;">{{user.get_full_name}}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">{{user.email}}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span
+                            class="status-badge {% if user.role == 'child' %}badge-success{% else %}badge-warning{% endif %}">
+                            {{user.get_role_display}}
+                        </span>
+                    </td>
+                    <td>
+                        {% if user.is_active %}
+                        <span
+                            style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #10b981;">
+                            <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+                            Active
+                        </span>
+                        {% else %}
+                        <span
+                            style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #ef4444;">
+                            <span style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444;"></span>
+                            Inactive
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="font-size: 0.85rem;">{{user.last_login|timesince|default:"Never"}} ago</div>
+                    </td>
+                    <td style="text-align: right;">
+                        <a href="{% url 'users:user_detail' user.id %}" class="action-link">
+                            <span class="material-icons" style="font-size: 18px;">analytics</span>
+                            View Profile
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state" style="padding: 5rem;">
+            <span class="material-icons" style="font-size: 4rem; opacity: 0.2; margin-bottom: 2rem;">group_off</span>
+            <h3>No Students Assigned</h3>
+            <p>You don't have any students assigned to your classroom yet.</p>
+        </div>
+        {% endif %}
+    </div>
+
 </div>
-{% endblock %} 
+{% endblock %}

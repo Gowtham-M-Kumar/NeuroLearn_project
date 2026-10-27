@@ -57,20 +57,23 @@ def drawing_list(request):
         drawings = Drawing.objects.filter(child=request.user)
     elif request.user.role == 'parent':
         children = request.user.parent_profile.children.all()
+        child_users = [child.user for child in children]
         drawings = Drawing.objects.filter(
-            child__in=children,
+            child__in=child_users,
             shared_with_parents=True
         )
     elif request.user.role == 'therapist':
         children = request.user.therapist_profile.assigned_children.all()
+        child_users = [child.user for child in children]
         drawings = Drawing.objects.filter(
-            child__in=children,
+            child__in=child_users,
             shared_with_therapists=True
         )
     elif request.user.role == 'teacher':
         children = request.user.teacher_profile.assigned_children.all()
+        child_users = [child.user for child in children]
         drawings = Drawing.objects.filter(
-            child__in=children,
+            child__in=child_users,
             shared_with_teachers=True
         )
     else:
@@ -94,6 +97,9 @@ def drawing_detail(request, drawing_id):
     if not drawing.can_be_viewed_by(request.user):
         messages.error(request, "You don't have permission to view this drawing.")
         return redirect('drawing:drawing_list')
+    
+    # Prepare JSON data for the template's preview canvas
+    drawing.json_canvas_data = json.dumps(drawing.get_canvas_data())
     
     context = {
         'drawing': drawing,

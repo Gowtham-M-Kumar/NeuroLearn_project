@@ -67,9 +67,9 @@
                             <div class="preview-content" id="sharingPreview">
                                 <span style="color:#888; font-size:0.98rem;">Based on your current settings, this drawing will be visible to:</span>
                                 <ul class="mb-0" style="margin-top: 10px; padding-left: 20px;">
-                                    <li id="parentsPreview">Parents: <span class="text-success">✓ Shared</span></li>
-                                    <li id="therapistsPreview">Therapists: <span class="text-success">✓ Shared</span></li>
-                                    <li id="teachersPreview">Teachers: <span class="text-success">✓ Shared</span></li>
+                                    <li id="parentsPreview">Parents: <span class="text-success"><span class="material-icons" style="vertical-align: middle; font-size: 1rem;">check_circle</span> Shared</span></li>
+                                    <li id="therapistsPreview">Therapists: <span class="text-success"><span class="material-icons" style="vertical-align: middle; font-size: 1rem;">check_circle</span> Shared</span></li>
+                                    <li id="teachersPreview">Teachers: <span class="text-success"><span class="material-icons" style="vertical-align: middle; font-size: 1rem;">check_circle</span> Shared</span></li>
                                 </ul>
                             </div>
                         </div>
@@ -104,10 +104,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 const previewElement = document.getElementById(previewId);
                 const statusSpan = previewElement.querySelector('span');
                 if (checkbox.checked) {
-                    statusSpan.textContent = '✓ Shared';
+                    statusSpan.innerHTML = '<span class="material-icons" style="vertical-align: middle; font-size: 1rem;">check_circle</span> Shared';
                     statusSpan.className = 'text-success';
                 } else {
-                    statusSpan.textContent = '✗ Not Shared';
+                    statusSpan.innerHTML = '<span class="material-icons" style="vertical-align: middle; font-size: 1rem;">cancel</span> Not Shared';
                     statusSpan.className = 'text-danger';
                 }
             }

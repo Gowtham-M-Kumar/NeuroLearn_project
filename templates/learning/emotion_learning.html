@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Emotion Learning - NeuroLearn{% endblock %}
+
+{% block page_header_icon %}
+<div class="header-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+    <span class="material-icons">mood</span>
+</div>
+{% endblock %}
+
+{% block page_title %}Emotion Learning{% endblock %}
+{% block page_subtitle %}Explore different feelings and emotions!{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'learning:learning_dashboard' %}" class="btn btn-outline-secondary">
+    <span class="material-icons">arrow_back</span>
+    Back to Learning
+</a>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .emotion-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 2rem;
+        padding-bottom: 3rem;
+    }
+
+    .emotion-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 24px;
+        overflow: hidden;
+        text-decoration: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2.5rem 1.5rem;
+        text-align: center;
+    }
+
+    .emotion-card:hover {
+        transform: translateY(-8px);
+        border-color: #f59e0b;
+        box-shadow: 0 20px 40px rgba(245, 158, 11, 0.15);
+    }
+
+    .emotion-icon-wrapper {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: #fffbeb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+        transition: transform 0.3s ease;
+    }
+
+    .emotion-card:hover .emotion-icon-wrapper {
+        transform: scale(1.1);
+    }
+
+    .emotion-icon-wrapper .material-icons {
+        font-size: 4rem;
+        color: #f59e0b;
+    }
+
+    .emotion-name {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .learn-btn {
+        margin-top: 1rem;
+        padding: 0.75rem 1.5rem;
+        background: #fffbeb;
+        color: #f59e0b;
+        border-radius: 99px;
+        font-weight: 700;
+        transition: all 0.2s ease;
+    }
+
+    .emotion-card:hover .learn-btn {
+        background: #f59e0b;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-custom">
+
+
+    {% if emotions %}
+    <div class="emotion-grid">
+        {% for emotion in emotions %}
+        <a href="{% url 'learning:emotion_detail' emotion.id %}" class="emotion-card">
+            <div class="emotion-icon-wrapper">
+                <span class="material-icons">
+                    {% if emotion.name|lower == 'happy' %}sentiment_very_satisfied
+                    {% elif emotion.name|lower == 'sad' %}sentiment_very_dissatisfied
+                    {% elif emotion.name|lower == 'anger' %}sentiment_extremely_dissatisfied
+                    {% elif emotion.name|lower == 'fear' %}scuba_diving
+                    {% elif emotion.name|lower == 'neutral' %}sentiment_neutral
+                    {% elif emotion.name|lower == 'surprise' %}sentiment_satisfied
+                    {% elif emotion.name|lower == 'disgust' %}sick
+                    {% else %}mood{% endif %}
+                </span>
+            </div>
+            <h4 class="emotion-name">{{ emotion.name }}</h4>
+            {% if emotion.id in completed_ids %}
+            <div class="badge bg-success"
+                style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.25rem; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); padding: 0.35rem 0.85rem; border-radius: 50px; font-weight: 700; font-size: 0.75rem;">
+                <span class="material-icons" style="font-size: 14px;">check_circle</span>
+                Learned!
+            </div>
+            {% else %}
+            <div class="learn-btn">Learn More</div>
+            {% endif %}
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 5rem 2rem;">
+        <span class="material-icons"
+            style="font-size: 5rem; color: var(--text-secondary); margin-bottom: 1rem;">mood_bad</span>
+        <h3 style="color: var(--text-secondary);">No emotions added yet.</h3>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

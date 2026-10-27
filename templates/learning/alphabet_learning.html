@@ -1,14 +1,60 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block page_header_icon %}{% endblock %}
+{% block page_title %}{% endblock %}
+{% block page_subtitle %}{% endblock %}
+{% block header_actions %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .alphabet-learning-fullscreen .header {
+    display: none !important;
+    height: 0 !important;
+  }
+
+  .alphabet-learning-fullscreen .content-wrapper {
+    padding: 0 !important;
+    margin-left: var(--sidebar-width, 240px) !important;
+    margin-top: 0 !important;
+    height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  .alphabet-learning-fullscreen main.container-custom {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+  }
+
+  .alphabet-learning-fullscreen footer {
+    display: none !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    flex: none !important;
+  }
+</style>
+{% endblock %}
+
+{% block body_class %}alphabet-learning-fullscreen{% endblock %}
+
 {% block content %}
-<h2>Alphabet Learning</h2>
-<div class="alphabet-list">
-  {% for letter in letters %}
-    <div class="letter-card">
-      <a href="{% url 'letter_detail' letter.char %}">
-        <img src="{{ letter.image.url }}" alt="{{ letter.char }}">
-        <div class="letter-char">{{ letter.char }}</div>
-      </a>
-    </div>
-  {% endfor %}
-</div>
-{% endblock %} 
+<iframe src="https://code-snare-83577338.figma.site/"
+  style="width: 100%; height: 100%; border: none; display: block; flex: 1;" allow="fullscreen" loading="lazy">
+</iframe>
+
+<script>
+  window.CURRENT_LEARNING_MODULE = 'alphabet';
+  window.COMPLETED_ITEMS = {{ completed_items | safe }};
+</script>
+<script src="{% static 'js/learning_iframe_bridge.js' %}"></script>
+{% endblock %}

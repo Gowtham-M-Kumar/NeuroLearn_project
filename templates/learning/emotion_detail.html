@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Learn {{ emotion.name }} - NeuroLearn{% endblock %}
+
+{% block page_header_icon %}
+<div class="header-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+    <span class="material-icons">
+        {% if emotion.name|lower == 'happy' %}sentiment_very_satisfied
+        {% elif emotion.name|lower == 'sad' %}sentiment_very_dissatisfied
+        {% elif emotion.name|lower == 'anger' %}sentiment_extremely_dissatisfied
+        {% elif emotion.name|lower == 'fear' %}scuba_diving
+        {% elif emotion.name|lower == 'neutral' %}sentiment_neutral
+        {% elif emotion.name|lower == 'surprise' %}sentiment_satisfied
+        {% elif emotion.name|lower == 'disgust' %}sick
+        {% else %}mood{% endif %}
+    </span>
+</div>
+{% endblock %}
+
+{% block page_title %}{{ emotion.name }}{% endblock %}
+{% block page_subtitle %}Watch and learn how this emotion looks!{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'learning:emotion_learning' %}" class="btn btn-outline-secondary">
+    <span class="material-icons">arrow_back</span>
+    Back to Emotions
+</a>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .emotion-detail-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .video-card {
+        background: black;
+        border-radius: 32px;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        margin-bottom: 3rem;
+        aspect-ratio: 16/9;
+        position: relative;
+    }
+
+    .video-card video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .info-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 24px;
+        padding: 2.5rem;
+        text-align: center;
+    }
+
+    .info-card h3 {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 1.5rem;
+        color: var(--text-primary);
+    }
+
+    .info-card p {
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+        max-width: 600px;
+        margin: 0 auto 2.5rem;
+        line-height: 1.6;
+    }
+
+    .complete-btn {
+        padding: 1.25rem 3rem;
+        font-size: 1.25rem;
+        font-weight: 800;
+        border-radius: 99px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .complete-btn.not-completed {
+        background: #f59e0b;
+        color: white;
+        box-shadow: 0 10px 20px rgba(245, 158, 11, 0.2);
+    }
+
+    .complete-btn.not-completed:hover {
+        transform: scale(1.05);
+        box-shadow: 0 15px 30px rgba(245, 158, 11, 0.3);
+    }
+
+    .complete-btn.completed {
+        background: #10b981;
+        color: white;
+        cursor: default;
+    }
+
+    .complete-btn .material-icons {
+        font-size: 1.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="emotion-detail-container">
+    <div class="video-card">
+        <video id="emotion-video" autoplay loop muted playsinline>
+            <source src="{{ emotion.video.url }}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
+    <div class="info-card">
+        <h3>That's the <strong>{{ emotion.name }}</strong> feeling!</h3>
+        <p>Watch the video to see how people's faces and bodies look when they feel {{ emotion.name|lower }}. Notice the
+            eyebrows, eyes, and mouth!</p>
+
+        <button id="complete-btn"
+            class="btn complete-btn {% if completed %}completed{% else %}not-completed{% endif %}">
+            <span class="material-icons">check_circle</span>
+            <span id="complete-text">{% if completed %}Learned!{% else %}Mark as Learned{% endif %}</span>
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('complete-btn').onclick = function () {
+        const btn = this;
+        const text = document.getElementById('complete-text');
+
+        // Prevent click if already completed
+        if (btn.classList.contains('completed')) return;
+
+        // Mark as completed API call
+        fetch('{% url "learning:api_mark_complete" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                module: 'emotions',
+                item: '{{ emotion.id }}',
+                completed: true
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                btn.classList.remove('not-completed');
+                btn.classList.add('completed');
+                text.innerText = 'Learned!';
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            })
+            .catch(error => console.error('Error:', error));
+    };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends 'communication/base_aac.html' %}
+
+{% block title %}Learning {{ symbol.word }}{% endblock %}
+{% block page_title %}Learning Mode{% endblock %}
+
+{% block content %}
+<div class="learning-container">
+
+    <!-- Zone 2: The Learning Card -->
+    <div class="learning-card border-{{ symbol.color_code|default:'highlight' }}" id="main-card"
+        onclick="playLearningSequence()">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <div id="learning-image-container">
+                {% if symbol.image %}
+                <img src="{{ symbol.image.url }}"
+                    style="width: 150px; height: 150px; object-fit: contain; margin-bottom: 2rem;">
+                {% else %}
+                <span class="material-icons"
+                    style="font-size: 8rem; margin-bottom: 2rem; color: var(--text-secondary);">image</span>
+                {% endif %}
+            </div>
+
+            <div class="learning-word" id="learning-text">{{ symbol.word }}</div>
+
+            {% if symbol.action_description %}
+            <div class="learning-action" id="learning-action" style="opacity: 0; transition: opacity 1s;">{{         symbol.action_description }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div style="margin-top: 2rem;">
+        <button onclick="playLearningSequence()" class="aac-back-btn"
+            style="background: var(--color-highlight); color: white; border: none;">
+            <span class="material-icons">play_circle</span>
+            Play Effect
+        </button>
+    </div>
+
+</div>
+
+<script>
+    function playLearningSequence() {
+        // Step 1: Speak Word
+        speak("{{ symbol.word }}");
+
+        const card = document.getElementById('main-card');
+        const actionText = document.getElementById('learning-action');
+
+        // Visual Pulse
+        card.style.transform = "scale(1.05)";
+        setTimeout(() => card.style.transform = "scale(1)", 200);
+
+        // Step 2: Show Action/Context (if exists)
+        if (actionText) {
+            setTimeout(() => {
+                actionText.style.opacity = "1";
+                speak("{{ symbol.action_description }}");
+            }, 1500);
+        }
+    }
+
+    // Auto-play on load
+    setTimeout(playLearningSequence, 500);
+</script>
+{% endblock %}

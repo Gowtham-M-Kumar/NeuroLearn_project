@@ -270,7 +270,7 @@
                     <div class="focus-game" id="focus-game">
                         <h3>Click the target when it appears!</h3>
                         <div id="target-area">
-                            <div class="target" id="target" style="display: none;">🎯</div>
+                            <div class="target" id="target" style="display: none;"><span class="material-icons">target</span></div>
                         </div>
                     </div>
                     
@@ -288,7 +288,7 @@
                             <canvas id="drawing-canvas" width="500" height="300"></canvas>
                         </div>
                         <div id="shape-display" class="mt-3">
-                            <div id="target-shape" style="font-size: 3rem;">⭐</div>
+                            <div id="target-shape" style="font-size: 3rem;"><span class="material-icons">star</span></div>
                         </div>
                     </div>
                     
@@ -553,7 +553,7 @@ function initializeMatchingGame() {
         card.dataset.index = index;
         
         card.innerHTML = `
-            <div class="card-back">❓</div>
+            <div class="card-back"><span class="material-icons">help</span></div>
             <div class="card-front" style="display: none;">${getEmoji(value)}</div>
         `;
         
@@ -645,7 +645,7 @@ function initializeMemoryGame() {
     const container = document.getElementById('memory-game');
     container.innerHTML = '';
     
-    const symbols = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼'];
+    const symbols = ['pets', 'cat', 'mouse', 'rabbit2', 'pets', 'fox', 'pets', 'pets'];
     const cards = [...symbols, ...symbols];
     
     // Shuffle cards
@@ -752,12 +752,12 @@ function initializeMotorGame() {
 }
 
 function initializeSortingGame() {
-    const items = ['🍎', '🍌', '🥕', '🥦', '🐶', '🐱', '🚗', '✈️'];
+    const items = ['apple', 'banana', 'carrot', 'leaf', 'pets', 'cat', 'directions_car', 'flight'];
     const categories = {
-        'Fruits': ['🍎', '🍌'],
-        'Vegetables': ['🥕', '🥦'],
-        'Animals': ['🐶', '🐱'],
-        'Vehicles': ['🚗', '✈️']
+        'Fruits': ['apple', 'banana'],
+        'Vegetables': ['carrot', 'leaf'],
+        'Animals': ['pets', 'cat'],
+        'Vehicles': ['directions_car', 'flight']
     };
     
     const container = document.getElementById('items-to-sort');
@@ -766,7 +766,7 @@ function initializeSortingGame() {
     items.forEach(item => {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'card';
-        itemDiv.textContent = item;
+        itemDiv.innerHTML = `<span class="material-icons" style="font-size: 2rem;">${item}</span>`;
         itemDiv.draggable = true;
         itemDiv.dataset.item = item;
         container.appendChild(itemDiv);
@@ -798,8 +798,9 @@ function initializeSequencingGame() {
 }
 
 function getEmoji(value) {
-    const emojis = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮'];
-    return emojis[value % emojis.length];
+    const icons = ['pets', 'cat', 'mouse', 'rabbit2', 'pets', 'fox', 'pets', 'pets', 'face_with_monocle', 'pets', 'face_with_monocle', 'pets'];
+    const iconName = icons[value % icons.length];
+    return `<span class="material-icons" style="font-size: 2rem;">` + iconName + `</span>`;
 }
 
 function handleDrop(e) {

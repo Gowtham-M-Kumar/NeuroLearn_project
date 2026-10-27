@@ -1,92 +1,96 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Parent Dashboard - NEURO Learning Platform{% endblock %}
+{% block title %}Parent Dashboard - NeuroLearn{% endblock %}
 
 {% block content %}
-<div class="child-dashboard-duo py-5">
-    <div class="duo-dashboard-container mx-auto">
-        <div class="duo-card welcome-card text-center shadow-sm mb-4">
-            <h2 class="duo-title mb-2">
-                <span class="me-2" style="font-size:2.5rem;">👨‍👩‍👧‍👦</span>Welcome, {{ user.get_full_name }}!
-            </h2>
-            <p class="duo-lead">Monitor your children's learning progress and stay connected with their therapists and teachers.</p>
-        </div>
-        <div class="duo-card shadow-sm p-4 mb-4">
-            <h3 class="duo-section-title mb-4 text-center">My Children</h3>
-            <div class="duo-dashboard-grid">
-                {% if children %}
-                    {% for child in children %}
-                    <div class="duo-module-card duo-blue text-center d-flex flex-column align-items-center justify-content-center">
-                        {% if child.user.profile_picture %}
-                        <img src="{{ child.user.profile_picture.url }}" alt="{{ child.full_name }}" class="rounded-circle mb-2" width="70" height="70">
-                        {% else %}
-                        <span class="duo-icon mb-2">🧒</span>
-                        {% endif %}
-                        <span class="duo-module-title">{{ child.full_name }}</span>
-                        <div class="text-white-50 small mb-1">Age: {{ child.age }}</div>
-                        <div class="text-white-50 small mb-2">Level: {{ child.learning_level|title }}</div>
-                        <div class="progress mb-2" style="height: 8px; background: #e9ecef;">
-                            <div class="progress-bar bg-success" style="width: 75%"></div>
-                        </div>
-                        <small class="text-white-50">75% Complete</small>
-                        <a href="#" class="btn btn-light btn-sm mt-2">View Progress</a>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="duo-module-card duo-blue text-center d-flex flex-column align-items-center justify-content-center">
-                        <span class="duo-icon mb-2">🧒</span>
-                        <span class="duo-module-title">No children added yet</span>
-                        <div class="text-white-50 small">Contact your therapist or teacher to add your children to the platform.</div>
-                    </div>
-                {% endif %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <h2 class="mb-4">Parent Dashboard</h2>
+
+            <div class="card mb-4 shadow-sm border-0 bg-dark text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Welcome, {{user.get_full_name}}</h5>
+                    <p class="card-text text-muted">Manage your children's routines and track their progress.</p>
+                    <!-- Notification settings moved to Profile/Settings page -->
+                </div>
             </div>
-        </div>
-        <div class="duo-card shadow-sm p-4 mb-4">
-            <h3 class="duo-section-title mb-4 text-center">Recent Activities & Notifications</h3>
+
+            <h4 class="mb-3">My Children</h4>
             <div class="row">
+                {% for child in children %}
                 <div class="col-md-6 mb-3">
-                    <div class="duo-module-card duo-green text-start">
-                        <h5 class="mb-2">Recent Activities</h5>
-                        <ul class="list-unstyled mb-0">
-                            <li><b>Alphabet Learning - Letter A</b> <span class="badge bg-success ms-2">Completed</span> <br><small>Sarah</small></li>
-                            <li class="mt-2"><b>Morning Routine</b> <span class="badge bg-success ms-2">Completed</span> <br><small>John</small></li>
-                            <li class="mt-2"><b>Number Matching Game</b> <span class="badge bg-warning ms-2">In Progress</span> <br><small>Sarah</small></li>
-                        </ul>
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-body">
+                            <h5 class="card-title">{{child.full_name}}</h5>
+                            <p class="card-text">
+                                <span class="badge bg-info">{{child.learning_level|title}}</span>
+                                <br>
+                                <small class="text-muted">Age: {{child.age}}</small>
+                            </p>
+                            <a href="#" class="btn btn-outline-primary btn-sm">View Progress</a>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <div class="duo-module-card duo-gold text-start">
-                        <h5 class="mb-2">Notifications</h5>
-                        <ul class="list-unstyled mb-0">
-                            <li><b>New therapy session scheduled</b> <br><small>3 mins ago - Dr. Smith has scheduled a new session for Sarah on Friday.</small></li>
-                            <li class="mt-2"><b>Progress report available</b> <br><small>1 hour ago - John's weekly progress report is ready for review.</small></li>
-                            <li class="mt-2"><b>New learning activity assigned</b> <br><small>2 hours ago - Sarah has been assigned a new alphabet learning activity.</small></li>
-                        </ul>
-                    </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-warning">No children assigned to your profile yet.</div>
                 </div>
+                {% endfor %}
             </div>
         </div>
-        <div class="duo-card shadow-sm p-4">
-            <h3 class="duo-section-title mb-4 text-center">Quick Actions</h3>
-            <div class="duo-dashboard-grid">
-                <a href="#" class="duo-module-card duo-blue text-center d-flex flex-column align-items-center justify-content-center text-decoration-none">
-                    <span class="duo-icon mb-2">📊</span>
-                    <span class="duo-module-title">View Progress Reports</span>
-                </a>
-                <a href="#" class="duo-module-card duo-green text-center d-flex flex-column align-items-center justify-content-center text-decoration-none">
-                    <span class="duo-icon mb-2">📅</span>
-                    <span class="duo-module-title">Schedule Sessions</span>
-                </a>
-                <a href="#" class="duo-module-card duo-purple text-center d-flex flex-column align-items-center justify-content-center text-decoration-none">
-                    <span class="duo-icon mb-2">💬</span>
-                    <span class="duo-module-title">Contact Therapist</span>
-                </a>
-                <a href="#" class="duo-module-card duo-gold text-center d-flex flex-column align-items-center justify-content-center text-decoration-none">
-                    <span class="duo-icon mb-2">⚙️</span>
-                    <span class="duo-module-title">Settings</span>
-                </a>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    Upcoming Routines
+                </div>
+                <div class="list-group list-group-flush" id="upcoming-routines">
+                    <!-- This would be populated via API -->
+                    <div class="list-group-item text-muted text-center py-4">
+                        Loading routines...
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %} 
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js"></script>
+
+<!-- Our registration script -->
+<script src="{% static 'js/fcm_registration.js' %}"></script>
+
+<script>
+    // Initialize Firebase (User must replace with their own config)
+    const firebaseConfig = {
+        // apiKey: "YOUR_API_KEY",
+        // authDomain: "YOUR_AUTH_DOMAIN",
+        // projectId: "YOUR_PROJECT_ID",
+        // storageBucket: "YOUR_STORAGE_BUCKET",
+        // messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        // appId: "YOUR_APP_ID"
+    };
+
+    if (firebaseConfig.apiKey) {
+        firebase.initializeApp(firebaseConfig);
+        const messaging = firebase.messaging();
+    } else {
+        document.getElementById('fcm-status').innerText = 'Firebase not configured yet. Please add your config in the template.';
+    }
+
+    // Override the placeholder registerFCM to show status
+    const originalRegisterFCM = registerFCM;
+    window.registerFCM = async function () {
+        if (!firebaseConfig.apiKey) {
+            alert('Please add your Firebase config to dashboard_parent.html first!');
+            return;
+        }
+        document.getElementById('fcm-status').innerText = 'Requesting permission...';
+        await originalRegisterFCM();
+    };
+</script>
+{% endblock %}

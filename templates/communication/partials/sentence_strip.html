@@ -1,0 +1,32 @@
+<div class="sentence-strip" id="sentence-strip"
+    style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem; min-height: 110px;">
+    <!-- Icon Container (Flexible) -->
+    <div id="sentence-container"
+        style="display: flex; gap: 0.5rem; overflow-x: auto; flex-grow: 1; align-items: center; min-height: 90px; padding: 0.25rem;">
+        <!-- Dynamic Slots will be injected by aac_shared.js -->
+    </div>
+
+    <!-- Integrated Type Input (Nudged up to the search row) -->
+    <div
+        style="display: flex; align-items: center; gap: 0.5rem; background: rgba(248, 250, 252, 0.7); padding: 0.4rem 0.6rem; border-radius: 20px; border: 1px solid rgba(226, 232, 240, 1); width: 240px; flex-shrink: 0;">
+        <span class="material-icons" style="color: var(--text-secondary); font-size: 1.2rem;">keyboard</span>
+        <input type="text" id="strip-type-input" placeholder="Type..."
+            style="width: 100px; flex: 1; border: none; background: transparent; padding: 0; font-size: 1rem; font-family: 'Outfit', sans-serif; outline: none; font-weight: 500;">
+        <button onclick="addTypedWord()" class="aac-btn-action btn-speak"
+            style="padding: 0.35rem 1rem; font-size: 0.85rem; box-shadow: none;">
+            Add
+        </button>
+    </div>
+
+    <!-- Action Buttons -->
+    <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+        <button onclick="clearSentence()" class="aac-btn-action btn-clear"
+            style="padding: 0.6rem 1.2rem; font-size: 0.95rem;">
+            Clear
+        </button>
+        <button onclick="speakSentence()" class="aac-btn-action btn-speak"
+            style="padding: 0.6rem 1.4rem; font-size: 0.95rem;">
+            Speak
+        </button>
+    </div>
+</div>

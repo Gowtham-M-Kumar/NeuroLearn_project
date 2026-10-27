@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+env/
+venv/
+
+*.sqlite3
+usernames.txt
+
+/media/activity_images/
+/media/aac_audio/
+/media/profile_pics/
+/media/task_images/
+/staticfiles/
+
+.DS_Store

@@ -1,16 +1,24 @@
+from datetime import time
 from django import forms
 from django.contrib.auth import get_user_model
-from .models import Routine, Task, TaskCompletion, RoutineSchedule
+from .models import (
+    Routine,
+    Task,
+    TaskCompletion,
+    RoutineSchedule,
+    TimetableEntry
+)
 
 User = get_user_model()
 
 
+# =========================
+# ROUTINE FORM
+# =========================
 class RoutineForm(forms.ModelForm):
-    """Form for creating and editing routines"""
-    
     class Meta:
         model = Routine
-        fields = ['title', 'description', 'assigned_to']
+        fields = ['title', 'description']
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -20,31 +28,23 @@ class RoutineForm(forms.ModelForm):
                 'class': 'form-control',
                 'rows': 3,
                 'placeholder': 'Describe the routine'
-            }),
-            'assigned_to': forms.SelectMultiple(attrs={
-                'class': 'form-select'
             })
         }
-    
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
-        super().__init__(*args, **kwargs)
-        
-        # Filter assigned_to to only show children
-        if user:
-            self.fields['assigned_to'].queryset = User.objects.filter(role='child')
-            self.fields['assigned_to'].widget.attrs.update({
-                'class': 'form-select',
-                'multiple': True
-            })
 
 
+# =========================
+# TASK FORM
+# =========================
 class TaskForm(forms.ModelForm):
-    """Form for creating and editing tasks"""
-    
     class Meta:
         model = Task
-        fields = ['title', 'description', 'image', 'estimated_duration', 'is_required']
+        fields = [
+            'title',
+            'description',
+            'image',
+            'estimated_duration',
+            'is_required'
+        ]
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -58,8 +58,8 @@ class TaskForm(forms.ModelForm):
             'estimated_duration': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'min': 1,
-                'max': 120,
-                'placeholder': 'Duration in minutes'
+                'max': 240,
+                'placeholder': 'Duration (minutes)'
             }),
             'is_required': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
@@ -67,9 +67,10 @@ class TaskForm(forms.ModelForm):
         }
 
 
+# =========================
+# TASK COMPLETION
+# =========================
 class TaskCompletionForm(forms.ModelForm):
-    """Form for marking task completion"""
-    
     class Meta:
         model = TaskCompletion
         fields = ['notes']
@@ -77,27 +78,20 @@ class TaskCompletionForm(forms.ModelForm):
             'notes': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 2,
-                'placeholder': 'Add any notes about the completion'
+                'placeholder': 'Optional notes'
             })
         }
 
 
+# =========================
+# ROUTINE SCHEDULE FORM
+# =========================
 class RoutineScheduleForm(forms.ModelForm):
-    """Form for scheduling routines"""
-    
     class Meta:
         model = RoutineSchedule
-        fields = ['routine', 'child', 'day_of_week', 'start_time', 'end_time']
+        fields = ['day_of_week', 'start_time', 'end_time']
         widgets = {
-            'routine': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'child': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'day_of_week': forms.Select(attrs={
-                'class': 'form-select'
-            }),
+            'day_of_week': forms.Select(attrs={'class': 'form-select'}),
             'start_time': forms.TimeInput(attrs={
                 'class': 'form-control',
                 'type': 'time'
@@ -107,64 +101,94 @@ class RoutineScheduleForm(forms.ModelForm):
                 'type': 'time'
             })
         }
-    
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
-        super().__init__(*args, **kwargs)
-        
-        if user:
-            # Filter routines based on user role
-            if user.role == 'therapist':
-                self.fields['routine'].queryset = Routine.objects.filter(
-                    created_by=user,
-                    is_active=True
-                )
-            elif user.role == 'teacher':
-                self.fields['routine'].queryset = Routine.objects.filter(
-                    created_by=user,
-                    is_active=True
-                )
-            elif user.role == 'parent':
-                # Parents can see routines assigned to their children
-                children = user.parent_profile.children.all()
-                child_users = [child.user for child in children]
-                self.fields['routine'].queryset = Routine.objects.filter(
-                    assigned_to__in=child_users,
-                    is_active=True
-                ).distinct()
-            
-            # Filter children based on user role
-            if user.role == 'therapist':
-                self.fields['child'].queryset = User.objects.filter(
-                    role='child',
-                    therapist_profile__therapists=user.therapist_profile
-                )
-            elif user.role == 'teacher':
-                self.fields['child'].queryset = User.objects.filter(
-                    role='child',
-                    teacher_profile__teachers=user.teacher_profile
-                )
-            elif user.role == 'parent':
-                children_profiles = user.parent_profile.children.all()
-                child_users = [child_profile.user for child_profile in children_profiles]
-                self.fields['child'].queryset = User.objects.filter(id__in=[user.id for user in child_users])
 
 
+# =========================
+# TASK REORDER
+# =========================
 class TaskReorderForm(forms.Form):
-    """Form for reordering tasks via AJAX"""
     task_id = forms.IntegerField()
     new_order = forms.IntegerField()
-    
+
+
+# =========================
+# TIMETABLE ENTRY FORM (FIXED)
+# =========================
+class TimetableEntryForm(forms.ModelForm):
+    """
+    12-hour time selection form that safely builds TimeField
+    """
+
+    HOUR_CHOICES = [(i, f"{i}") for i in range(1, 13)]
+    MINUTE_CHOICES = [(i, f"{i:02d}") for i in range(0, 60, 5)]
+    AM_PM_CHOICES = [('AM', 'AM'), ('PM', 'PM')]
+
+    hour = forms.ChoiceField(
+        choices=HOUR_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    minute = forms.ChoiceField(
+        choices=MINUTE_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    am_pm = forms.ChoiceField(
+        choices=AM_PM_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    class Meta:
+        model = TimetableEntry
+        fields = [
+            'day_type',
+            'task_type',
+            'custom_description',
+            'notes'
+        ]
+        widgets = {
+            'day_type': forms.Select(attrs={'class': 'form-select'}),
+            'task_type': forms.Select(
+                attrs={
+                    'class': 'form-select',
+                    'onchange': 'toggleCustomDescription(this)'
+                }
+            ),
+            'custom_description': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Custom activity name'
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Optional guidance'
+            })
+        }
+
     def clean(self):
         cleaned_data = super().clean()
-        task_id = cleaned_data.get('task_id')
-        new_order = cleaned_data.get('new_order')
-        
-        if task_id and new_order is not None:
-            try:
-                task = Task.objects.get(id=task_id)
-                cleaned_data['task'] = task
-            except Task.DoesNotExist:
-                raise forms.ValidationError("Task not found")
-        
-        return cleaned_data 
+
+        hour = cleaned_data.get('hour')
+        minute = cleaned_data.get('minute')
+        am_pm = cleaned_data.get('am_pm')
+
+        if not (hour and minute and am_pm):
+            raise forms.ValidationError("Please select a valid time.")
+
+        hour = int(hour)
+        minute = int(minute)
+
+        # Convert to 24-hour format
+        if am_pm == 'PM' and hour != 12:
+            hour += 12
+        if am_pm == 'AM' and hour == 12:
+            hour = 0
+
+        cleaned_data['time'] = time(hour, minute)
+
+        # Validate custom activity
+        if cleaned_data.get('task_type') == 'other' and not cleaned_data.get('custom_description'):
+            self.add_error(
+                'custom_description',
+                'Please enter a custom activity name.'
+            )
+
+        return cleaned_data

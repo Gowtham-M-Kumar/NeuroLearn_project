@@ -1,9 +1,60 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block page_header_icon %}{% endblock %}
+{% block page_title %}{% endblock %}
+{% block page_subtitle %}{% endblock %}
+{% block header_actions %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .word-learning-fullscreen .header {
+    display: none !important;
+    height: 0 !important;
+  }
+
+  .word-learning-fullscreen .content-wrapper {
+    padding: 0 !important;
+    margin-left: var(--sidebar-width, 240px) !important;
+    margin-top: 0 !important;
+    height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  .word-learning-fullscreen main.container-custom {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+  }
+
+  .word-learning-fullscreen footer {
+    display: none !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    flex: none !important;
+  }
+</style>
+{% endblock %}
+
+{% block body_class %}word-learning-fullscreen{% endblock %}
+
 {% block content %}
-<h2>Word Learning</h2>
-<ul>
-  {% for code, label in categories %}
-    <li><a href="?category={{ code }}">{{ label }}</a></li>
-  {% endfor %}
-</ul>
-{% endblock %} 
+<iframe src="https://sooraj-1080ti.github.io/Figma-Word/"
+  style="width: 100%; height: 100%; border: none; display: block; flex: 1;" allow="fullscreen" loading="lazy">
+</iframe>
+
+<script>
+  window.CURRENT_LEARNING_MODULE = 'words';
+  window.COMPLETED_ITEMS = {{ completed_items | safe }};
+</script>
+<script src="{% static 'js/learning_iframe_bridge.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}Performance Reports{% endblock %}
+{% block page_subtitle %}In-depth performance data for your assigned students.{% endblock %}
+
+{% block extra_head %}
+<style>
+    .reports-container {
+        display: flex;
+        flex-direction: column;
+        gap: 2.5rem;
+        padding-bottom: 3rem;
+    }
+
+    .report-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 24px;
+        padding: 2.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .report-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .report-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .report-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .report-table th {
+        text-align: left;
+        padding: 1rem;
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: 2px solid var(--border-subtle);
+    }
+
+    .report-table td {
+        padding: 1.25rem 1rem;
+        border-bottom: 1px solid var(--border-subtle);
+        font-size: 0.95rem;
+        color: var(--text-primary);
+    }
+
+    .report-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .summary-item {
+        background: var(--bg-main);
+        padding: 1.5rem;
+        border-radius: 20px;
+        border: 1px solid var(--border-subtle);
+        text-align: center;
+    }
+
+    .summary-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+    }
+
+    .summary-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--accent-primary);
+    }
+
+    .export-btn {
+        background: var(--bg-main);
+        border: 1px solid var(--border-subtle);
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .export-btn:hover {
+        background: var(--accent-primary);
+        color: white;
+        border-color: var(--accent-primary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reports-container">
+
+    <!-- CLASS SUMMARY -->
+    <div class="report-card">
+        <div class="report-header">
+            <h3 class="report-title">
+                <span class="material-icons" style="color: var(--accent-secondary);">analytics</span>
+                Class-Level Summary Report
+            </h3>
+            {% comment %} <div class="export-btn">
+                <span class="material-icons" style="font-size: 18px;">download</span>
+                Export CSV
+            </div> {% endcomment %}
+        </div>
+
+        <div class="summary-grid">
+            <div class="summary-item">
+                <div class="summary-label">Class Enrollment</div>
+                <div class="summary-value">{{class_summary.total_students}}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Avg. Success Rate</div>
+                <div class="summary-value">{{class_summary.avg_class_accuracy}}%</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Total Creative Submissions</div>
+                <div class="summary-value">{{class_summary.total_drawings}}</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Routines Completed</div>
+                <div class="summary-value">{{class_summary.total_routine_tasks}}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INDIVIDUAL PERFORMANCE DATA -->
+    <div class="report-card">
+        <div class="report-header">
+            <h3 class="report-title">
+                <span class="material-icons" style="color: #8b5cf6;">assessment</span>
+                Student Progress Distribution
+            </h3>
+            {% comment %} <div class="export-btn">
+                <span class="material-icons" style="font-size: 18px;">print</span>
+                Print Report
+            </div> {% endcomment %}
+        </div>
+
+        {% if student_reports %}
+        <div style="overflow-x: auto;">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Student Name</th>
+                        <th>Game Accuracy</th>
+                        <th>Total Sessions</th>
+                        <th>Learning Modules</th>
+                        <th>Drawings</th>
+                        <th>Routine Tasks</th>
+                        <th style="text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in student_reports %}
+                    <tr>
+                        <td style="font-weight: 700;">{{report.name}}</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                {{report.game_accuracy}}%
+                                <div class="progress-minimal" style="width: 60px; height: 6px;">
+                                    <div class="progress-bar-minimal"
+                                        style="width: {{report.game_accuracy}}%; background: var(--accent-primary);">
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{report.game_sessions}} plays</td>
+                        <td>{{report.learning_total}} mastered</td>
+                        <td>{{report.drawings}} works</td>
+                        <td>{{report.routine_tasks}} tasks</td>
+                        <td style="text-align: right;">
+                            <a href="{% url 'users:user_detail' report.id %}" class="small text-secondary"
+                                style="text-decoration: underline;">Full Analytics</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding: 4rem;">
+            <span class="material-icons"
+                style="font-size: 3rem; opacity: 0.2; margin-bottom: 1rem;">history_toggle_off</span>
+            <p class="text-secondary">No activity data recorded in the last 30 days.</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

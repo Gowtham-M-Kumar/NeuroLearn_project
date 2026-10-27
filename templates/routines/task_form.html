@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}{{ title }}{% endblock %}
+{% block page_subtitle %}Add a visual task to the routine <strong>"{{ routine.title }}"</strong>{% endblock %}
+
+{% block content %}
+<div class="container-custom" style="max-width: 800px; margin: 0 auto;">
+    <div class="section-card">
+        <h3 class="section-title-sm">
+            <span class="material-icons">add_task</span>
+            Task Configuration
+        </h3>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="{{ form.title.id_for_label }}" class="form-label">
+                    <span class="material-icons"
+                        style="font-size: 18px; vertical-align: middle; margin-right: 4px;">title</span>
+                    Task Title
+                </label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                <div style="color: var(--accent-secondary); font-size: 0.8rem; mt: 0.5rem;">
+                    {% for error in form.title.errors %}{{ error }}{% endfor %}
+                </div>
+                {% endif %}
+                <p class="feature-desc" style="margin-top: 0.4rem;">e.g., "Brush Teeth", "Morning Meditation".</p>
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.description.id_for_label }}" class="form-label">
+                    <span class="material-icons"
+                        style="font-size: 18px; vertical-align: middle; margin-right: 4px;">notes</span>
+                    Instructions (Optional)
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                <div style="color: var(--accent-secondary); font-size: 0.8rem; mt: 0.5rem;">
+                    {% for error in form.description.errors %}{{ error }}{% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="row" style="display: flex; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div class="form-group" style="flex: 1;">
+                    <label for="{{ form.estimated_duration.id_for_label }}" class="form-label">
+                        <span class="material-icons"
+                            style="font-size: 18px; vertical-align: middle; margin-right: 4px;">timer</span>
+                        Duration (mins)
+                    </label>
+                    {{ form.estimated_duration }}
+                </div>
+                <div class="form-group" style="flex: 1; display: flex; align-items: flex-end; padding-bottom: 10px;">
+                    <label class="form-label"
+                        style="display: flex; align-items: center; gap: 8px; margin-bottom: 0; cursor: pointer;">
+                        {{ form.is_required }}
+                        Is Mandatory
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.image.id_for_label }}" class="form-label">
+                    <span class="material-icons"
+                        style="font-size: 18px; vertical-align: middle; margin-right: 4px;">add_photo_alternate</span>
+                    Visual aid (Image)
+                </label>
+                <div
+                    style="padding: 1rem; border: 2px dashed var(--border-subtle); border-radius: 12px; text-align: center;">
+                    {{ form.image }}
+                    <p class="feature-desc" style="margin-top: 0.5rem;">Help the child visualize the task by uploading a
+                        clear image.</p>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                <a href="{% url 'routines:routine_detail' routine.id %}" class="btn btn-outline text-muted">
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <span class="material-icons">check</span>
+                    Save Task
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
